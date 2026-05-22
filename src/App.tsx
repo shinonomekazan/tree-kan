@@ -2,11 +2,16 @@ import { useState, useCallback } from "react";
 import TreeGraph from "./TreeGraph";
 import DetailPanel from "./DetailPanel";
 import { projectData } from "./mockData";
+import { nodeStorage } from "./storage";
 import type { TreeNode, NewNodePayload } from "./types";
 
 export default function App() {
-  const [data, setData] = useState<TreeNode>(projectData);
-  const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
+  const [data, setData] = useState<TreeNode>(
+    () => nodeStorage.getTreeData() || projectData,
+  );
+  const [selectedNode, setSelectedNode] = useState<TreeNode | null>(
+    () => nodeStorage.getTreeData() || projectData,
+  );
 
   const handleAddChild = useCallback(
     (parentId: string, payload: NewNodePayload) => {
@@ -36,6 +41,7 @@ export default function App() {
         };
 
         appendChild(newData);
+        nodeStorage.saveTreeData(newData);
 
         if (updatedNode && selectedNode?.id === parentId) {
           setSelectedNode(updatedNode);
@@ -52,11 +58,7 @@ export default function App() {
       <div className="flex-1 relative w-full h-full">
         <TreeGraph data={data} onNodeClick={setSelectedNode} />
       </div>
-      <DetailPanel
-        selectedNode={selectedNode}
-        onClose={() => setSelectedNode(null)}
-        onAddChild={handleAddChild}
-      />
+      <DetailPanel selectedNode={selectedNode} onAddChild={handleAddChild} />
     </div>
   );
 }

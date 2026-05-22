@@ -1,22 +1,24 @@
 import { useState } from "react";
-import { X, MessageSquare, Clock, Code, Plus } from "lucide-react";
+import { MessageSquare, Clock, Code, Plus } from "lucide-react";
 import type { TreeNode, NewNodePayload } from "./types";
 import CreateNodeModal from "./CreateNodeModal";
 
 interface DetailPanelProps {
   selectedNode: TreeNode | null;
-  onClose: () => void;
   onAddChild: (parentId: string, payload: NewNodePayload) => void;
 }
 
 export default function DetailPanel({
   selectedNode,
-  onClose,
   onAddChild,
 }: DetailPanelProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  if (!selectedNode) return null;
+  if (!selectedNode) {
+    return (
+      <div className="w-96 h-full bg-white shadow-xl flex flex-col z-10 border-l border-slate-200 shrink-0" />
+    );
+  }
 
   const handleAddChild = (payload: NewNodePayload) => {
     onAddChild(selectedNode.id, payload);
@@ -36,13 +38,6 @@ export default function DetailPanel({
               title="Thêm node con"
             >
               <Plus size={18} />
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 hover:bg-slate-200 text-slate-500 rounded-full transition-colors"
-              title="Đóng"
-            >
-              <X size={18} />
             </button>
           </div>
         </div>

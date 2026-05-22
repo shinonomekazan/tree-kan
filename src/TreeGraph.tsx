@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import * as d3 from "d3";
-import { ZoomIn, ZoomOut, Focus, ChevronDown, ChevronUp } from "lucide-react";
+import { ZoomIn, ZoomOut, ChevronDown, ChevronUp } from "lucide-react";
 import type { TreeNode } from "./types";
 import { nodeStorage } from "./storage";
 
@@ -20,7 +20,7 @@ export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
-  const [isLegendOpen, setIsLegendOpen] = useState(true);
+  const [isLegendOpen, setIsLegendOpen] = useState(false);
 
   const stats = useMemo(() => {
     let total = 0;
@@ -285,14 +285,6 @@ export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
       .call(zoomRef.current.scaleBy, factor);
   };
 
-  const handleCenter = () => {
-    if (!svgRef.current || !zoomRef.current) return;
-    d3.select(svgRef.current)
-      .transition()
-      .duration(500)
-      .call(zoomRef.current.transform, d3.zoomIdentity);
-  };
-
   return (
     <div
       ref={wrapperRef}
@@ -306,12 +298,6 @@ export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
           className="p-2.5 bg-white rounded-lg shadow-md border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
         >
           <ZoomIn size={20} />
-        </button>
-        <button
-          onClick={handleCenter}
-          className="p-2.5 bg-white rounded-lg shadow-md border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
-        >
-          <Focus size={20} />
         </button>
         <button
           onClick={() => handleZoom(0.8)}
