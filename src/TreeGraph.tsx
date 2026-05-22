@@ -88,8 +88,17 @@ export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
       const zoom = d3
         .zoom<SVGSVGElement, unknown>()
         .scaleExtent([0.1, 4])
+        .filter(
+          (e: MouseEvent | WheelEvent) => e.type === "wheel" || e.button === 2,
+        )
+        .on("start", () => {
+          d3.select(svgRef.current).style("cursor", "grabbing");
+        })
         .on("zoom", (e) => {
           zoomGroup.attr("transform", e.transform.toString());
+        })
+        .on("end", () => {
+          d3.select(svgRef.current).style("cursor", null);
         });
 
       zoomRef.current = zoom;
@@ -165,6 +174,7 @@ export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
 
       const drag = d3
         .drag<SVGGElement, CustomNode>()
+        .filter((e: MouseEvent) => e.button === 0)
         .on("drag", function (event, d) {
           d.cx += event.dx;
           d.cy += event.dy;
@@ -290,7 +300,11 @@ export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
       ref={wrapperRef}
       className="absolute inset-0 w-full h-full bg-slate-50 z-0"
     >
-      <svg ref={svgRef} className="block w-full h-full outline-none" />
+      <svg
+        ref={svgRef}
+        className="block w-full h-full outline-none"
+        onContextMenu={(e) => e.preventDefault()}
+      />
 
       <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-10">
         <button
