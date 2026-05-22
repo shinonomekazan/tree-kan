@@ -88,22 +88,35 @@ export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
       const zoom = d3
         .zoom<SVGSVGElement, unknown>()
         .scaleExtent([0.1, 4])
-        .filter(
-          (e: MouseEvent | WheelEvent) => e.type === "wheel" || e.button === 2,
-        )
         .on("start", () => {
           d3.select(svgRef.current).style("cursor", "grabbing");
         })
         .on("zoom", (e) => {
           zoomGroup.attr("transform", e.transform.toString());
         })
-        .on("end", () => {
+        .on("end", (e) => {
           d3.select(svgRef.current).style("cursor", null);
+          nodeStorage.saveTransform(
+            e.transform.x,
+            e.transform.y,
+            e.transform.k,
+          );
         });
 
       zoomRef.current = zoom;
       svg.call(zoom);
-      svg.call(zoom.transform, d3.zoomIdentity);
+
+      const savedTransform = nodeStorage.getTransform();
+      if (savedTransform) {
+        svg.call(
+          zoom.transform,
+          d3.zoomIdentity
+            .translate(savedTransform.x, savedTransform.y)
+            .scale(savedTransform.k),
+        );
+      } else {
+        svg.call(zoom.transform, d3.zoomIdentity);
+      }
 
       const tree = d3
         .tree<TreeNode>()

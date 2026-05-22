@@ -6,11 +6,14 @@ export interface INodeStorage {
   saveTreeData(data: TreeNode): void;
   getTreeData(): TreeNode | null;
   clear(): void;
+  saveTransform(x: number, y: number, k: number): void;
+  getTransform(): { x: number; y: number; k: number } | null;
 }
 
 class LocalStorageAdapter implements INodeStorage {
   STORAGE_KEY = "node_positions";
   TREE_DATA_KEY = "tree_data";
+  TRANSFORM_KEY = "map_transform";
 
   getPositions(): Record<string, { cx: number; cy: number }> {
     const data = localStorage.getItem(this.STORAGE_KEY);
@@ -38,6 +41,15 @@ class LocalStorageAdapter implements INodeStorage {
 
   clear(): void {
     localStorage.removeItem(this.STORAGE_KEY);
+  }
+
+  saveTransform(x: number, y: number, k: number): void {
+    localStorage.setItem(this.TRANSFORM_KEY, JSON.stringify({ x, y, k }));
+  }
+
+  getTransform(): { x: number; y: number; k: number } | null {
+    const data = localStorage.getItem(this.TRANSFORM_KEY);
+    return data ? JSON.parse(data) : null;
   }
 }
 

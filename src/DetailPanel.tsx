@@ -1,7 +1,7 @@
-import slackIcon from './assets/slack-icon.png';
-import githubIcon from './assets/github-icon.png';
-import { useState } from "react";
-import { Clock, Code, Plus, ExternalLink, Trash2 } from "lucide-react";
+import slackIcon from "./assets/slack-icon.png";
+import githubIcon from "./assets/github-icon.png";
+import { useState, useEffect } from "react";
+import { Code, Plus, ExternalLink, Trash2, Edit } from "lucide-react";
 import type { TreeNode, NewNodePayload, LinkItem } from "./types";
 import CreateNodeModal from "./CreateNodeModal";
 
@@ -13,23 +13,33 @@ interface DetailPanelProps {
     slackLinks?: LinkItem[],
     githubLinks?: LinkItem[],
   ) => void;
+  onUpdateDescription: (nodeId: string, description: string) => void;
 }
 
 export default function DetailPanel({
   selectedNode,
   onAddChild,
   onUpdateNodeLinks,
+  onUpdateDescription,
 }: DetailPanelProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [linkModalState, setLinkModalState] = useState<{
     isOpen: boolean;
     type: "slack" | "github";
+    editLink?: LinkItem;
   }>({ isOpen: false, type: "slack" });
   const [deleteConfirmState, setDeleteConfirmState] = useState<{
     isOpen: boolean;
     type: "slack" | "github";
     id: string;
   }>({ isOpen: false, type: "slack", id: "" });
+  const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    if (selectedNode) {
+      setDescription(selectedNode.description || "");
+    }
+  }, [selectedNode]);
 
   if (!selectedNode) {
     return (
@@ -59,18 +69,24 @@ export default function DetailPanel({
     setDeleteConfirmState({ isOpen: false, type: "slack", id: "" });
   };
 
-  const handleAddLink = (link: LinkItem) => {
-    if (linkModalState.type === "slack") {
-      onUpdateNodeLinks(
-        selectedNode.id,
-        [...(selectedNode.slackLinks || []), link],
-        selectedNode.githubLinks,
-      );
+  const handleAddOrEditLink = (link: LinkItem) => {
+    const isSlack = linkModalState.type === "slack";
+    const currentLinks = isSlack
+      ? selectedNode.slackLinks
+      : selectedNode.githubLinks;
+    const linkExists = currentLinks?.find((l) => l.id === link.id);
+
+    let newLinks: LinkItem[];
+    if (linkExists) {
+      newLinks = currentLinks!.map((l) => (l.id === link.id ? link : l));
     } else {
-      onUpdateNodeLinks(selectedNode.id, selectedNode.slackLinks, [
-        ...(selectedNode.githubLinks || []),
-        link,
-      ]);
+      newLinks = [...(currentLinks || []), link];
+    }
+
+    if (isSlack) {
+      onUpdateNodeLinks(selectedNode.id, newLinks, selectedNode.githubLinks);
+    } else {
+      onUpdateNodeLinks(selectedNode.id, selectedNode.slackLinks, newLinks);
     }
     setLinkModalState({ isOpen: false, type: "slack" });
   };
@@ -103,6 +119,14 @@ export default function DetailPanel({
             <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={() =>
+                  setLinkModalState({ isOpen: true, type, editLink: link })
+                }
+                className="opacity-0 group-hover:opacity-100 p-1.5 text-blue-500 hover:bg-blue-50 rounded transition-all"
+              >
+                <Edit size={16} />
+              </button>
+              <button
+                onClick={() =>
                   setDeleteConfirmState({ isOpen: true, type, id: link.id })
                 }
                 className="opacity-0 group-hover:opacity-100 p-1.5 text-red-500 hover:bg-red-50 rounded transition-all"
@@ -124,7 +148,7 @@ export default function DetailPanel({
           onClick={() => setLinkModalState({ isOpen: true, type })}
           className="w-full py-2 flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-dashed border-slate-300 rounded-lg transition-colors"
         >
-          <Plus size={16} /> Thêm liên kết
+          <Plus size={16} />
         </button>
       </div>
     </div>
@@ -174,10 +198,22 @@ ${selectedNode.status === "done"
             <h3 className="flex items-center gap-2 font-semibold text-slate-700">
               <Code size={18} /> Mô tả kỹ thuật
             </h3>
-            <p className="text-sm text-slate-600 bg-slate-100 p-3 rounded-lg leading-relaxed">
-              {selectedNode.description ||
-                "Chưa có mô tả kỹ thuật cho công việc này. Vui lòng cập nhật tài liệu."}
-            </p>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full text-sm text-slate-600 bg-slate-50 border border-slate-200 p-3 rounded-lg leading-relaxed outline-none focus:border-blue-400 min-h-[100px] resize-y transition-colors"
+              placeholder="Nhập mô tả kỹ thuật..."
+            />
+            <div className="flex justify-end">
+              <button
+                onClick={() =>
+                  onUpdateDescription(selectedNode.id, description)
+                }
+                className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+              >
+                Lưu
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -202,27 +238,6 @@ ${selectedNode.status === "done"
               />,
             )}
           </div>
-
-          <div className="space-y-2">
-            <h3 className="flex items-center gap-2 font-semibold text-slate-700">
-              <Clock size={18} /> Lịch sử thay đổi
-            </h3>
-            <ul className="text-sm text-slate-600 space-y-3 border-l-2 border-slate-200 pl-4 ml-1">
-              <li className="relative">
-                <span className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-slate-300"></span>
-                <span className="font-semibold text-slate-700">
-                  {selectedNode.assignee || "Admin"}
-                </span>{" "}
-                đã tương tác (Hôm qua)
-              </li>
-              {selectedNode.status === "in-progress" && (
-                <li className="relative">
-                  <span className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-blue-400"></span>
-                  Chuyển sang Đang thực hiện (2 giờ trước)
-                </li>
-              )}
-            </ul>
-          </div>
         </div>
       </div>
       <CreateNodeModal
@@ -233,8 +248,9 @@ ${selectedNode.status === "done"
       <LinkModal
         isOpen={linkModalState.isOpen}
         type={linkModalState.type}
+        editLink={linkModalState.editLink}
         onClose={() => setLinkModalState({ ...linkModalState, isOpen: false })}
-        onSubmit={handleAddLink}
+        onSubmit={handleAddOrEditLink}
       />
       <ConfirmModal
         isOpen={deleteConfirmState.isOpen}
@@ -250,24 +266,41 @@ ${selectedNode.status === "done"
 interface LinkModalProps {
   isOpen: boolean;
   type: "slack" | "github";
+  editLink?: LinkItem;
   onClose: () => void;
   onSubmit: (link: LinkItem) => void;
 }
 
-function LinkModal({ isOpen, type, onClose, onSubmit }: LinkModalProps) {
+function LinkModal({
+  isOpen,
+  type,
+  editLink,
+  onClose,
+  onSubmit,
+}: LinkModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setTitle(editLink?.title || "");
+      setDescription(editLink?.description || "");
+      setUrl(editLink?.url || "");
+    }
+  }, [isOpen, editLink]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !url.trim()) return;
-    onSubmit({ id: crypto.randomUUID(), title, description, url });
-    setTitle("");
-    setDescription("");
-    setUrl("");
+    onSubmit({
+      id: editLink?.id || crypto.randomUUID(),
+      title,
+      description,
+      url,
+    });
   };
 
   return (
@@ -277,7 +310,8 @@ function LinkModal({ isOpen, type, onClose, onSubmit }: LinkModalProps) {
         className="bg-white rounded-lg p-5 w-[400px] shadow-xl"
       >
         <h3 className="text-lg font-bold mb-4">
-          Thêm liên kết {type === "slack" ? "Slack" : "GitHub"}
+          {editLink ? "Cập nhật liên kết" : "Thêm liên kết"}{" "}
+          {type === "slack" ? "Slack" : "GitHub"}
         </h3>
         <div className="space-y-3">
           <input
@@ -316,7 +350,7 @@ function LinkModal({ isOpen, type, onClose, onSubmit }: LinkModalProps) {
             type="submit"
             className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
           >
-            Thêm
+            {editLink ? "Cập nhật" : "Thêm"}
           </button>
         </div>
       </form>
