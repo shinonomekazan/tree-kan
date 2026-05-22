@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import * as d3 from "d3";
 import { ZoomIn, ZoomOut, Focus, ChevronDown, ChevronUp } from "lucide-react";
 import type { TreeNode } from "./types";
+import { nodeStorage } from "./storage";
 
 interface TreeGraphProps {
   data: TreeNode;
@@ -106,9 +107,16 @@ export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
       treeRoot.each((d) => {
         const node = d as CustomNode;
         node.angle = node.x;
-        const angleRad = node.x - Math.PI / 2;
-        node.cx = node.y * Math.cos(angleRad);
-        node.cy = node.y * Math.sin(angleRad);
+
+        const savedPosition = nodeStorage.getPosition(node.data.id);
+        if (savedPosition) {
+          node.cx = savedPosition.cx;
+          node.cy = savedPosition.cy;
+        } else {
+          const angleRad = node.x - Math.PI / 2;
+          node.cx = node.y * Math.cos(angleRad);
+          node.cy = node.y * Math.sin(angleRad);
+        }
 
         if (node.depth === 1) {
           node.branchColor = node.data.color;
@@ -170,6 +178,9 @@ export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
                 l.target.data.id === d.data.id,
             )
             .attr("d", linkGen);
+        })
+        .on("end", function (event, d) {
+          nodeStorage.savePosition(d.data.id, d.cx, d.cy);
         });
 
       nodeGroup.call(drag as (selection: typeof nodeGroup) => void);
