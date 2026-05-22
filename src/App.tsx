@@ -3,7 +3,7 @@ import TreeGraph from "./TreeGraph";
 import DetailPanel from "./DetailPanel";
 import { projectData } from "./mockData";
 import { nodeStorage } from "./storage";
-import type { TreeNode, NewNodePayload, LinkItem } from "./types";
+import type { TreeNode, NewNodePayload, LinkItem, TaskStatus } from "./types";
 
 export default function App() {
   const [data, setData] = useState<TreeNode>(
@@ -120,10 +120,47 @@ export default function App() {
     [selectedNode],
   );
 
+  const handleUpdateStatus = useCallback(
+    (nodeId: string, status: TaskStatus) => {
+      setData((prevData) => {
+        const newData = JSON.parse(JSON.stringify(prevData)) as TreeNode;
+        let updatedNode: TreeNode | null = null;
+
+        const updateNode = (node: TreeNode): boolean => {
+          if (node.id === nodeId) {
+            node.status = status;
+            updatedNode = node;
+            return true;
+          }
+          if (node.children) {
+            for (const child of node.children) {
+              if (updateNode(child)) return true;
+            }
+          }
+          return false;
+        };
+
+        updateNode(newData);
+        nodeStorage.saveTreeData(newData);
+
+        if (updatedNode && selectedNode?.id === nodeId) {
+          setSelectedNode(updatedNode);
+        }
+
+        return newData;
+      });
+    },
+    [selectedNode],
+  );
+
   return (
     <div className="flex w-screen h-screen font-sans overflow-hidden bg-slate-50">
       <div className="flex-1 relative w-full h-full">
-        <TreeGraph data={data} onNodeClick={setSelectedNode} />
+        <TreeGraph
+          data={data}
+          onNodeClick={setSelectedNode}
+          onUpdateStatus={handleUpdateStatus}
+        />
       </div>
       <DetailPanel
         selectedNode={selectedNode}

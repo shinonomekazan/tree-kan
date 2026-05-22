@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import * as d3 from "d3";
-import { ZoomIn, ZoomOut, ChevronDown, ChevronUp } from "lucide-react";
-import type { TreeNode } from "./types";
+import { ZoomIn, ZoomOut, ChevronDown, ChevronUp, Kanban } from "lucide-react";
+import type { TreeNode, TaskStatus } from "./types";
 import { nodeStorage } from "./storage";
+import KanbanBoard from "./KanbanBoard";
 
 interface TreeGraphProps {
   data: TreeNode;
   onNodeClick: (node: TreeNode) => void;
+  onUpdateStatus: (id: string, status: TaskStatus) => void;
 }
 
 type CustomNode = d3.HierarchyPointNode<TreeNode> & {
@@ -16,11 +18,16 @@ type CustomNode = d3.HierarchyPointNode<TreeNode> & {
   angle: number;
 };
 
-export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
+export default function TreeGraph({
+  data,
+  onNodeClick,
+  onUpdateStatus,
+}: TreeGraphProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
+  const [isKanban, setIsKanban] = useState(false);
 
   const stats = useMemo(() => {
     let total = 0;
@@ -315,9 +322,19 @@ export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
     >
       <svg
         ref={svgRef}
-        className="block w-full h-full outline-none"
+        className={`block w-full h-full outline-none transition-opacity ${isKanban ? "opacity-0 pointer-events-none" : "opacity-100"}`}
         onContextMenu={(e) => e.preventDefault()}
       />
+
+      {isKanban && (
+        <div className="absolute inset-0 z-0 bg-transparent">
+          <KanbanBoard
+            data={data}
+            onNodeClick={onNodeClick}
+            onUpdateStatus={onUpdateStatus}
+          />
+        </div>
+      )}
 
       <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-10">
         <button
@@ -334,7 +351,7 @@ export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
         </button>
       </div>
 
-      <div className="absolute top-6 left-6 z-10">
+      <div className="absolute top-6 left-6 z-10 flex flex-col gap-4">
         <div className="bg-white/95 rounded-xl shadow-md border border-slate-200 w-80 overflow-hidden transition-all">
           <div
             className="p-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors"
@@ -399,6 +416,14 @@ export default function TreeGraph({ data, onNodeClick }: TreeGraphProps) {
             </div>
           </div>
         </div>
+
+        <button
+          onClick={() => setIsKanban(!isKanban)}
+          className="flex items-center justify-center gap-2 w-80 p-3 bg-white/95 rounded-xl shadow-md border border-slate-200 hover:bg-slate-50 text-slate-800 font-bold text-sm transition-colors"
+        >
+          <Kanban size={18} />
+          {isKanban ? "Hiển thị Đồ thị" : "Bảng Kanban"}
+        </button>
       </div>
     </div>
   );
