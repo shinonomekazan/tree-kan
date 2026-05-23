@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef, useState } from "react";
 import type { TreeNode, TaskStatus } from "./types";
 
 interface KanbanBoardProps {
@@ -7,6 +7,7 @@ interface KanbanBoardProps {
   onReorderTasks: (
     updates: { id: string; status: TaskStatus; order: number }[],
   ) => void;
+  focusedTaskId: string | null;
 }
 
 const COLUMNS: { id: TaskStatus; label: string; color: string }[] = [
@@ -21,7 +22,13 @@ export default function KanbanBoard({
   data,
   onNodeClick,
   onReorderTasks,
+  focusedTaskId,
 }: KanbanBoardProps) {
+  const taskRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(
+    null,
+  );
+
   const tasks = useMemo(() => {
     const result: TreeNode[] = [];
     const traverse = (node: TreeNode) => {
@@ -31,6 +38,22 @@ export default function KanbanBoard({
     traverse(data);
     return result.sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [data]);
+
+  useEffect(() => {
+    if (focusedTaskId) {
+      setHighlightedTaskId(focusedTaskId);
+      const element = taskRefs.current.get(focusedTaskId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      const timer = setTimeout(() => {
+        setHighlightedTaskId(null);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [focusedTaskId, tasks]);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData("text/plain", id);
@@ -94,12 +117,20 @@ export default function KanbanBoard({
               {colTasks.map((task) => (
                 <div
                   key={task.id}
+                  ref={(el) => {
+                    if (el) taskRefs.current.set(task.id, el);
+                    else taskRefs.current.delete(task.id);
+                  }}
                   draggable
                   onDragStart={(e) => handleDragStart(e, task.id)}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, col.id, task.id)}
                   onClick={() => onNodeClick(task)}
-                  className="bg-white p-3 rounded-lg shadow-sm border border-slate-200 cursor-grab active:cursor-grabbing hover:border-blue-400 transition-colors"
+                  className={`bg-white p-3 rounded-lg border cursor-grab active:cursor-grabbing transition-all duration-500 ${
+                    highlightedTaskId === task.id
+                      ? "border-green-500 ring-4 ring-green-300 shadow-lg shadow-green-200 scale-[1.02]"
+                      : "border-slate-200 shadow-sm hover:border-blue-400"
+                  }`}
                 >
                   <h4 className="font-semibold text-slate-800 text-sm mb-1">
                     {task.name}

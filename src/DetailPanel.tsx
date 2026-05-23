@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { FC } from "react";
-import { Code, Plus, Edit2 } from "lucide-react";
+import { Code, Plus, Edit2, KanbanSquare } from "lucide-react";
 import slackIcon from "./assets/slack-icon.png";
 import githubIcon from "./assets/github-icon.png";
 import type { TreeNode, NewNodePayload, LinkItem } from "./types";
@@ -20,6 +20,7 @@ interface DetailPanelProps {
   ) => void;
   onUpdateDescription: (nodeId: string, description: string) => void;
   onUpdateNodeName: (nodeId: string, name: string) => void;
+  onOpenKanban: (id: string) => void;
 }
 
 const DetailPanel: FC<DetailPanelProps> = ({
@@ -28,6 +29,7 @@ const DetailPanel: FC<DetailPanelProps> = ({
   onUpdateNodeLinks,
   onUpdateDescription,
   onUpdateNodeName,
+  onOpenKanban,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
@@ -162,6 +164,12 @@ const DetailPanel: FC<DetailPanelProps> = ({
               >
                 {selectedNode.status.toUpperCase()}
               </span>
+              <button
+                onClick={() => onOpenKanban(selectedNode.id)}
+                className="ml-auto flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 shadow-sm rounded-md text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <KanbanSquare size={14} /> Kanban
+              </button>
             </div>
           )}
 

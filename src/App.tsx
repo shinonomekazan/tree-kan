@@ -12,6 +12,8 @@ export default function App() {
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(
     () => nodeStorage.getTreeData() || projectData,
   );
+  const [isKanban, setIsKanban] = useState(false);
+  const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
 
   const handleAddChild = useCallback(
     (parentId: string, payload: NewNodePayload) => {
@@ -187,6 +189,11 @@ export default function App() {
     [selectedNode],
   );
 
+  const handleOpenKanban = useCallback((id: string) => {
+    setIsKanban(true);
+    setFocusedTaskId(id);
+  }, []);
+
   return (
     <div className="flex w-screen h-screen font-sans overflow-hidden bg-slate-50">
       <div className="flex-1 relative w-full h-full">
@@ -194,6 +201,9 @@ export default function App() {
           data={data}
           onNodeClick={setSelectedNode}
           onReorderTasks={handleReorderTasks}
+          isKanban={isKanban}
+          onToggleKanban={() => setIsKanban(!isKanban)}
+          focusedTaskId={focusedTaskId}
         />
       </div>
       <DetailPanel
@@ -202,6 +212,7 @@ export default function App() {
         onUpdateNodeLinks={handleUpdateNodeLinks}
         onUpdateDescription={handleUpdateDescription}
         onUpdateNodeName={handleUpdateNodeName}
+        onOpenKanban={handleOpenKanban}
       />
     </div>
   );

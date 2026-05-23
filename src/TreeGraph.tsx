@@ -11,6 +11,9 @@ interface TreeGraphProps {
   onReorderTasks: (
     updates: { id: string; status: TaskStatus; order: number }[],
   ) => void;
+  isKanban: boolean;
+  onToggleKanban: () => void;
+  focusedTaskId: string | null;
 }
 
 type CustomNode = d3.HierarchyPointNode<TreeNode> & {
@@ -24,12 +27,14 @@ export default function TreeGraph({
   data,
   onNodeClick,
   onReorderTasks,
+  isKanban,
+  onToggleKanban,
+  focusedTaskId,
 }: TreeGraphProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
-  const [isKanban, setIsKanban] = useState(false);
 
   const stats = useMemo(() => {
     let total = 0;
@@ -302,14 +307,8 @@ export default function TreeGraph({
           return d.angle < Math.PI === !d.children ? "start" : "end";
         })
         .text((d) => d.data.name)
-        .attr("font-size", (d) =>
-          d.data.type === "root"
-            ? "16px"
-            : "14px"
-        )
-        .attr("font-weight", (d) =>
-          d.data.type === "root" ? "bold" : "500",
-        )
+        .attr("font-size", (d) => (d.data.type === "root" ? "16px" : "14px"))
+        .attr("font-weight", (d) => (d.data.type === "root" ? "bold" : "500"))
         .attr("fill", "#1e293b")
         .attr("stroke", "#ffffff")
         .attr("stroke-width", 4)
@@ -366,6 +365,7 @@ export default function TreeGraph({
             data={data}
             onNodeClick={onNodeClick}
             onReorderTasks={onReorderTasks}
+            focusedTaskId={focusedTaskId}
           />
         </div>
       )}
@@ -454,7 +454,7 @@ export default function TreeGraph({
         </div>
 
         <button
-          onClick={() => setIsKanban(!isKanban)}
+          onClick={onToggleKanban}
           className="flex items-center justify-center gap-2 w-56 p-2 bg-white/95 rounded-lg shadow-md border border-slate-200 hover:bg-slate-50 text-slate-800 font-bold text-xs transition-colors"
         >
           <Kanban size={14} />
