@@ -163,7 +163,7 @@ export default function TreeGraph({
 
       const nodesData = treeRoot.descendants() as CustomNode[];
 
-      const linkGen = d3
+      const radialLinkGen = d3
         .linkRadial<d3.HierarchyPointLink<TreeNode>, CustomNode>()
         .source((d) => d.source as CustomNode)
         .target((d) => d.target as CustomNode)
@@ -182,7 +182,14 @@ export default function TreeGraph({
         )
         .attr("stroke-width", (d) => Math.max(1.5, 4 - d.target.depth))
         .attr("opacity", 0.6)
-        .attr("d", linkGen);
+        .attr("d", (d) => {
+          const source = d.source as CustomNode;
+          const target = d.target as CustomNode;
+          if (target.data.type !== "task") {
+            return `M${source.cx},${source.cy} L${target.cx},${target.cy}`;
+          }
+          return radialLinkGen(d);
+        });
 
       const nodeGroup = zoomGroup
         .append("g")
@@ -212,7 +219,13 @@ export default function TreeGraph({
                 l.source.data.id === d.data.id ||
                 l.target.data.id === d.data.id,
             )
-            .attr("d", linkGen);
+            .attr("d", (d) => {
+              const source = d.source as CustomNode;
+              const target = d.target as CustomNode;
+              return target.data.type !== "task"
+                ? `M${source.cx},${source.cy} L${target.cx},${target.cy}`
+                : radialLinkGen(d);
+            });
         })
         .on("end", function (event, d) {
           nodeStorage.savePosition(d.data.id, d.cx, d.cy);
@@ -221,8 +234,7 @@ export default function TreeGraph({
       nodeGroup.call(drag as (selection: typeof nodeGroup) => void);
 
       const getColor = (d: CustomNode) => {
-        if (d.data.type === "project" || d.data.type === "module")
-          return d.branchColor || "#cbd5e1";
+        if (d.data.type !== "task") return "#22c55e";
         switch (d.data.status) {
           case "done":
             return "#3b82f6";
@@ -236,13 +248,32 @@ export default function TreeGraph({
       };
 
       nodeGroup
-        .filter((d) => d.data.type !== "root")
-        .append("circle")
-        .attr("r", (d) =>
-          d.data.type === "project" ? 14 : d.data.type === "module" ? 10 : 6,
-        )
+        .filter((d) => d.data.type === "module")
+        .append("rect")
+        .attr("width", 16)
+        .attr("height", 16)
+        .attr("x", -8)
+        .attr("y", -8)
         .attr("fill", getColor)
-        .attr("stroke", "#ffffff")
+        .attr("stroke", "#000000")
+        .attr("stroke-width", 2)
+        .attr("class", "transition-all duration-300 hover:opacity-80");
+
+      nodeGroup
+        .filter((d) => d.data.type === "project")
+        .append("polygon")
+        .attr("points", "0,-14 12,-7 12,7 0,14 -12,7 -12,-7")
+        .attr("fill", getColor)
+        .attr("stroke", "#000000")
+        .attr("stroke-width", 2)
+        .attr("class", "transition-all duration-300 hover:opacity-80");
+
+      nodeGroup
+        .filter((d) => d.data.type === "task")
+        .append("circle")
+        .attr("r", 6)
+        .attr("fill", getColor)
+        .attr("stroke", "#000000")
         .attr("stroke-width", 2)
         .attr("class", "transition-all duration-300 hover:opacity-80");
 
