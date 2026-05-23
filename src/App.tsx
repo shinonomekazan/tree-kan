@@ -195,6 +195,41 @@ export default function App() {
     setFocusedTaskId(id);
   }, []);
 
+  const handleDeleteNode = useCallback(
+    (nodeId: string) => {
+      setData((prevData) => {
+        if (prevData.id === nodeId) return prevData;
+
+        const newData = JSON.parse(JSON.stringify(prevData)) as TreeNode;
+
+        const removeNode = (node: TreeNode): boolean => {
+          if (!node.children) return false;
+
+          const index = node.children.findIndex((child) => child.id === nodeId);
+          if (index !== -1) {
+            node.children.splice(index, 1);
+            return true;
+          }
+
+          for (const child of node.children) {
+            if (removeNode(child)) return true;
+          }
+          return false;
+        };
+
+        removeNode(newData);
+        nodeStorage.saveTreeData(newData);
+
+        if (selectedNode?.id === nodeId) {
+          setSelectedNode(null);
+        }
+
+        return newData;
+      });
+    },
+    [selectedNode],
+  );
+
   return (
     <div className="flex w-screen h-screen font-sans overflow-hidden bg-slate-50">
       <div className="flex-1 relative w-full h-full">
@@ -214,6 +249,7 @@ export default function App() {
         onUpdateDescription={handleUpdateDescription}
         onUpdateNodeName={handleUpdateNodeName}
         onOpenKanban={handleOpenKanban}
+        onDeleteNode={handleDeleteNode}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { FC } from "react";
-import { Code, Plus, Edit2, KanbanSquare } from "lucide-react";
+import { Code, Plus, Edit2, KanbanSquare, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import slackIcon from "./assets/slack-icon.png";
 import githubIcon from "./assets/github-icon.png";
@@ -22,6 +22,7 @@ interface DetailPanelProps {
   onUpdateDescription: (nodeId: string, description: string) => void;
   onUpdateNodeName: (nodeId: string, name: string) => void;
   onOpenKanban: (id: string) => void;
+  onDeleteNode: (nodeId: string) => void;
 }
 
 const DetailPanel: FC<DetailPanelProps> = ({
@@ -31,10 +32,12 @@ const DetailPanel: FC<DetailPanelProps> = ({
   onUpdateDescription,
   onUpdateNodeName,
   onOpenKanban,
+  onDeleteNode,
 }) => {
   const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [isDeleteNodeModalOpen, setIsDeleteNodeModalOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [linkModalState, setLinkModalState] = useState<{
     isOpen: boolean;
@@ -137,6 +140,12 @@ const DetailPanel: FC<DetailPanelProps> = ({
               className="p-1.5 hover:bg-blue-100 text-blue-600 rounded-full transition-colors"
             >
               <Plus size={18} />
+            </button>
+            <button
+              onClick={() => setIsDeleteNodeModalOpen(true)}
+              className="p-1.5 hover:bg-red-100 text-red-600 rounded-full transition-colors"
+            >
+              <Trash2 size={18} />
             </button>
           </div>
         </div>
@@ -252,6 +261,14 @@ const DetailPanel: FC<DetailPanelProps> = ({
           setDeleteConfirmState((prev) => ({ ...prev, isOpen: false }))
         }
         onConfirm={handleDeleteLink}
+      />
+      <ConfirmModal
+        isOpen={isDeleteNodeModalOpen}
+        onClose={() => setIsDeleteNodeModalOpen(false)}
+        onConfirm={() => {
+          onDeleteNode(selectedNode.id);
+          setIsDeleteNodeModalOpen(false);
+        }}
       />
       <RenameNodeModal
         isOpen={isRenameModalOpen}
