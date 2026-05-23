@@ -174,7 +174,7 @@ export default function TreeGraph({
         .attr("fill", "none")
         .attr(
           "stroke",
-          (d) => (d.target as CustomNode).branchColor || "#cbd5e1",
+          "#3a3838",
         )
         .attr("stroke-width", (d) => Math.max(1.5, 4 - d.target.depth))
         .attr("opacity", 0.6)
