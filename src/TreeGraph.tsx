@@ -36,7 +36,34 @@ export default function TreeGraph({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
+  const [showImportBtn, setShowImportBtn] = useState(false);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("import")) {
+      setShowImportBtn(true);
+    }
+  }, []);
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        nodeStorage.importAllData(JSON.parse(content));
+        window.location.href = window.location.pathname;
+      } catch {}
+    };
+    reader.readAsText(file);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const stats = useMemo(() => {
     let total = 0,
@@ -172,10 +199,7 @@ export default function TreeGraph({
         .data(treeRoot.links())
         .join("path")
         .attr("fill", "none")
-        .attr(
-          "stroke",
-          "#3a3838",
-        )
+        .attr("stroke", "#3a3838")
         .attr("stroke-width", (d) => Math.max(1.5, 4 - d.target.depth))
         .attr("opacity", 0.6)
         .attr("d", (d) => {
@@ -351,6 +375,23 @@ export default function TreeGraph({
       />
 
       <div className="absolute top-4 right-4 z-20 flex gap-2">
+        {showImportBtn && (
+          <>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+            >
+              Import
+            </button>
+            <input
+              type="file"
+              accept=".json,application/json"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleImportFile}
+            />
+          </>
+        )}
         <button
           onClick={() => i18n.changeLanguage("en")}
           className={`px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border ${i18n.language === "en" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import TreeGraph from "./TreeGraph";
 import DetailPanel from "./DetailPanel";
 import { projectData } from "./mockData";
@@ -15,6 +15,27 @@ export default function App() {
   );
   const [isKanban, setIsKanban] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.has("export")) {
+      const exportData = nodeStorage.exportAllData();
+      const blob = new Blob([JSON.stringify(exportData)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "tree-data-export.json";
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  }, []);
 
   const handleAddChild = useCallback(
     (parentId: string, payload: NewNodePayload) => {
@@ -55,7 +76,6 @@ export default function App() {
     },
     [selectedNode],
   );
-
   const handleUpdateNodeLinks = useCallback(
     (nodeId: string, slackLinks?: LinkItem[], githubLinks?: LinkItem[]) => {
       setData((prevData) => {
@@ -89,7 +109,6 @@ export default function App() {
     },
     [selectedNode],
   );
-
   const handleUpdateDescription = useCallback(
     (nodeId: string, description: string) => {
       setData((prevData) => {
@@ -122,7 +141,6 @@ export default function App() {
     },
     [selectedNode],
   );
-
   const handleReorderTasks = useCallback(
     (updates: { id: string; status: TaskStatus; order: number }[]) => {
       setData((prevData) => {
@@ -156,7 +174,6 @@ export default function App() {
     },
     [selectedNode],
   );
-
   const handleUpdateNodeName = useCallback(
     (nodeId: string, name: string) => {
       setData((prevData) => {
@@ -189,12 +206,10 @@ export default function App() {
     },
     [selectedNode],
   );
-
   const handleOpenKanban = useCallback((id: string) => {
     setIsKanban(true);
     setFocusedTaskId(id);
   }, []);
-
   const handleDeleteNode = useCallback(
     (nodeId: string) => {
       setData((prevData) => {

@@ -8,6 +8,8 @@ export interface INodeStorage {
   clear(): void;
   saveTransform(x: number, y: number, k: number): void;
   getTransform(): { x: number; y: number; k: number } | null;
+  exportAllData(): Record<string, unknown>;
+  importAllData(data: Record<string, unknown>): void;
 }
 
 class LocalStorageAdapter implements INodeStorage {
@@ -19,37 +21,49 @@ class LocalStorageAdapter implements INodeStorage {
     const data = localStorage.getItem(this.STORAGE_KEY);
     return data ? JSON.parse(data) : {};
   }
-
   savePosition(id: string, cx: number, cy: number): void {
     const positions = this.getPositions();
     positions[id] = { cx, cy };
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(positions));
   }
-
   getPosition(id: string): { cx: number; cy: number } | null {
     return this.getPositions()[id] || null;
   }
-
   saveTreeData(data: TreeNode): void {
     localStorage.setItem(this.TREE_DATA_KEY, JSON.stringify(data));
   }
-
   getTreeData(): TreeNode | null {
     const data = localStorage.getItem(this.TREE_DATA_KEY);
     return data ? JSON.parse(data) : null;
   }
-
   clear(): void {
     localStorage.removeItem(this.STORAGE_KEY);
   }
-
   saveTransform(x: number, y: number, k: number): void {
     localStorage.setItem(this.TRANSFORM_KEY, JSON.stringify({ x, y, k }));
   }
-
   getTransform(): { x: number; y: number; k: number } | null {
     const data = localStorage.getItem(this.TRANSFORM_KEY);
     return data ? JSON.parse(data) : null;
+  }
+  exportAllData(): Record<string, unknown> {
+    return {
+      positions: this.getPositions(),
+      treeData: this.getTreeData(),
+      transform: this.getTransform(),
+    };
+  }
+
+  importAllData(data: Record<string, unknown>): void {
+    if (data.positions) {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data.positions));
+    }
+    if (data.treeData) {
+      localStorage.setItem(this.TREE_DATA_KEY, JSON.stringify(data.treeData));
+    }
+    if (data.transform) {
+      localStorage.setItem(this.TRANSFORM_KEY, JSON.stringify(data.transform));
+    }
   }
 }
 
