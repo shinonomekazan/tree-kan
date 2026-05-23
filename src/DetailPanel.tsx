@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { FC } from "react";
 import { Code, Plus, Edit2, KanbanSquare } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import slackIcon from "./assets/slack-icon.png";
 import githubIcon from "./assets/github-icon.png";
 import type { TreeNode, NewNodePayload, LinkItem } from "./types";
@@ -31,6 +32,7 @@ const DetailPanel: FC<DetailPanelProps> = ({
   onUpdateNodeName,
   onOpenKanban,
 }) => {
+  const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [description, setDescription] = useState("");
@@ -46,9 +48,7 @@ const DetailPanel: FC<DetailPanelProps> = ({
   }>({ isOpen: false, type: "slack", id: "" });
 
   useEffect(() => {
-    if (selectedNode) {
-      setDescription(selectedNode.description || "");
-    }
+    if (selectedNode) setDescription(selectedNode.description || "");
   }, [selectedNode]);
 
   const handleAddChild = useCallback(
@@ -129,14 +129,12 @@ const DetailPanel: FC<DetailPanelProps> = ({
             <button
               onClick={() => setIsRenameModalOpen(true)}
               className="p-1.5 hover:bg-slate-200 text-slate-600 rounded-full transition-colors"
-              title="Đổi tên node"
             >
               <Edit2 size={18} />
             </button>
             <button
               onClick={() => setIsModalOpen(true)}
               className="p-1.5 hover:bg-blue-100 text-blue-600 rounded-full transition-colors"
-              title="Thêm node con"
             >
               <Plus size={18} />
             </button>
@@ -147,7 +145,7 @@ const DetailPanel: FC<DetailPanelProps> = ({
           {selectedNode.type === "task" && selectedNode.status && (
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-slate-600">
-                Trạng thái:
+                {t("status")}:
               </span>
               <span
                 className={`px-3 py-1 rounded-full text-xs font-bold text-white ${
@@ -162,26 +160,30 @@ const DetailPanel: FC<DetailPanelProps> = ({
                           : "bg-slate-400"
                 }`}
               >
-                {selectedNode.status.toUpperCase()}
+                {t(
+                  selectedNode.status === "in-progress"
+                    ? "inProgress"
+                    : selectedNode.status,
+                ).toUpperCase()}
               </span>
               <button
                 onClick={() => onOpenKanban(selectedNode.id)}
                 className="ml-auto flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 shadow-sm rounded-md text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
               >
-                <KanbanSquare size={14} /> Kanban
+                <KanbanSquare size={14} /> {t("kanban")}
               </button>
             </div>
           )}
 
           <div className="space-y-2">
             <h3 className="flex items-center gap-2 font-semibold text-slate-700">
-              <Code size={18} /> Mô tả kỹ thuật
+              <Code size={18} /> {t("techDesc")}
             </h3>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full text-sm text-slate-600 bg-slate-50 border border-slate-200 p-3 rounded-lg leading-relaxed outline-none focus:border-blue-400 min-h-[100px] resize-y transition-colors"
-              placeholder="Nhập mô tả kỹ thuật..."
+              placeholder={t("techDescPh")}
             />
             <div className="flex justify-end">
               <button
@@ -190,7 +192,7 @@ const DetailPanel: FC<DetailPanelProps> = ({
                 }
                 className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
               >
-                Lưu
+                {t("save")}
               </button>
             </div>
           </div>

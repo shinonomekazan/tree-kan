@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import * as d3 from "d3";
 import { ZoomIn, ZoomOut, ChevronDown, ChevronUp, Kanban } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { TreeNode, TaskStatus } from "./types";
 import { nodeStorage } from "./storage";
 import KanbanBoard from "./KanbanBoard";
@@ -31,18 +32,18 @@ export default function TreeGraph({
   onToggleKanban,
   focusedTaskId,
 }: TreeGraphProps) {
+  const { t, i18n } = useTranslation();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
 
   const stats = useMemo(() => {
-    let total = 0;
-    let done = 0;
-    let review = 0;
-    let inProgress = 0;
-    let todo = 0;
-
+    let total = 0,
+      done = 0,
+      review = 0,
+      inProgress = 0,
+      todo = 0;
     const traverse = (node: TreeNode) => {
       if (node.type === "task" && node.status !== "archive") {
         total++;
@@ -51,16 +52,11 @@ export default function TreeGraph({
         else if (node.status === "in-progress") inProgress++;
         else todo++;
       }
-      if (node.children) {
-        node.children.forEach(traverse);
-      }
+      if (node.children) node.children.forEach(traverse);
     };
-
     traverse(data);
-
     const getPercent = (count: number) =>
       total > 0 ? Math.round((count / total) * 100) : 0;
-
     return {
       done: getPercent(done),
       review: getPercent(review),
@@ -70,16 +66,11 @@ export default function TreeGraph({
   }, [data]);
 
   const pieStyle = useMemo(() => {
-    const p1 = stats.done;
-    const p2 = p1 + stats.review;
-    const p3 = p2 + stats.inProgress;
+    const p1 = stats.done,
+      p2 = p1 + stats.review,
+      p3 = p2 + stats.inProgress;
     return {
-      background: `conic-gradient(
-        #3b82f6 0% ${p1}%,
-        #a855f7 ${p1}% ${p2}%,
-        #eab308 ${p2}% ${p3}%,
-        #94a3b8 ${p3}% 100%
-      )`,
+      background: `conic-gradient(#3b82f6 0% ${p1}%, #a855f7 ${p1}% ${p2}%, #eab308 ${p2}% ${p3}%, #94a3b8 ${p3}% 100%)`,
     };
   }, [stats]);
 
@@ -359,6 +350,21 @@ export default function TreeGraph({
         onContextMenu={(e) => e.preventDefault()}
       />
 
+      <div className="absolute top-4 right-4 z-20 flex gap-2">
+        <button
+          onClick={() => i18n.changeLanguage("en")}
+          className={`px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border ${i18n.language === "en" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+        >
+          EN
+        </button>
+        <button
+          onClick={() => i18n.changeLanguage("ja")}
+          className={`px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border ${i18n.language === "ja" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+        >
+          JA
+        </button>
+      </div>
+
       {isKanban && (
         <div className="absolute inset-0 z-0 bg-transparent">
           <KanbanBoard
@@ -394,7 +400,7 @@ export default function TreeGraph({
             onClick={() => setIsLegendOpen(!isLegendOpen)}
           >
             <h1 className="font-bold text-xs text-slate-800 flex items-center gap-2">
-              Thống kê
+              {t("statistics")}
             </h1>
             {isLegendOpen ? (
               <ChevronUp size={14} className="text-slate-500" />
@@ -414,8 +420,8 @@ export default function TreeGraph({
               <ul className="flex-1 space-y-2 text-[10px] font-medium text-slate-700">
                 <li className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-blue-500 shadow-sm border border-white"></span>
-                    Hoàn thành
+                    <span className="w-2 h-2 rounded-full bg-blue-500 shadow-sm border border-white" />
+                    {t("done")}
                   </span>
                   <span className="font-bold text-slate-900">
                     {stats.done}%
@@ -423,8 +429,8 @@ export default function TreeGraph({
                 </li>
                 <li className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-purple-500 shadow-sm border border-white"></span>
-                    Review
+                    <span className="w-2 h-2 rounded-full bg-purple-500 shadow-sm border border-white" />
+                    {t("review")}
                   </span>
                   <span className="font-bold text-slate-900">
                     {stats.review}%
@@ -432,8 +438,8 @@ export default function TreeGraph({
                 </li>
                 <li className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-yellow-500 shadow-sm border border-white"></span>
-                    Đang làm
+                    <span className="w-2 h-2 rounded-full bg-yellow-500 shadow-sm border border-white" />
+                    {t("inProgress")}
                   </span>
                   <span className="font-bold text-slate-900">
                     {stats.inProgress}%
@@ -441,8 +447,8 @@ export default function TreeGraph({
                 </li>
                 <li className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-slate-400 shadow-sm border border-white"></span>
-                    Chờ xử lý
+                    <span className="w-2 h-2 rounded-full bg-slate-400 shadow-sm border border-white" />
+                    {t("todo")}
                   </span>
                   <span className="font-bold text-slate-900">
                     {stats.todo}%
@@ -458,7 +464,7 @@ export default function TreeGraph({
           className="flex items-center justify-center gap-2 w-56 p-2 bg-white/95 rounded-lg shadow-md border border-slate-200 hover:bg-slate-50 text-slate-800 font-bold text-xs transition-colors"
         >
           <Kanban size={14} />
-          {isKanban ? "Hiển thị Đồ thị" : "Bảng Kanban"}
+          {isKanban ? t("showGraph") : t("kanbanBoard")}
         </button>
       </div>
     </div>

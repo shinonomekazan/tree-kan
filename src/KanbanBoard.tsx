@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { TreeNode, TaskStatus } from "./types";
 
 interface KanbanBoardProps {
@@ -10,31 +11,46 @@ interface KanbanBoardProps {
   focusedTaskId: string | null;
 }
 
-const COLUMNS: { id: TaskStatus; label: string; color: string }[] = [
-  { id: "todo", label: "Chờ xử lý", color: "bg-slate-400" },
-  { id: "in-progress", label: "Đang thực hiện", color: "bg-yellow-500" },
-  { id: "review", label: "Review", color: "bg-purple-500" },
-  { id: "done", label: "Hoàn thành", color: "bg-blue-500" },
-  { id: "archive", label: "Lưu trữ", color: "bg-slate-600" },
-];
-
 export default function KanbanBoard({
   data,
   onNodeClick,
   onReorderTasks,
   focusedTaskId,
 }: KanbanBoardProps) {
+  const { t } = useTranslation();
   const taskRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(
     null,
   );
-
   const [dragState, setDragState] = useState<{ id: string } | null>(null);
   const [dropState, setDropState] = useState<{
     colId: TaskStatus;
     taskId?: string;
     pos?: "top" | "bottom";
   } | null>(null);
+
+  const columns = useMemo(
+    () => [
+      { id: "todo" as TaskStatus, label: t("todo"), color: "bg-slate-400" },
+      {
+        id: "in-progress" as TaskStatus,
+        label: t("inProgress"),
+        color: "bg-yellow-500",
+      },
+      {
+        id: "review" as TaskStatus,
+        label: t("review"),
+        color: "bg-purple-500",
+      },
+      { id: "done" as TaskStatus, label: t("done"), color: "bg-blue-500" },
+      {
+        id: "archive" as TaskStatus,
+        label: t("archive"),
+        color: "bg-slate-600",
+      },
+    ],
+    [t],
+  );
 
   const tasks = useMemo(() => {
     const result: TreeNode[] = [];
@@ -136,7 +152,7 @@ export default function KanbanBoard({
 
   return (
     <div className="flex w-full h-full p-6 pt-32 gap-6 overflow-x-auto bg-slate-50">
-      {COLUMNS.map((col) => {
+      {columns.map((col) => {
         const colTasks = tasks.filter((t) => (t.status || "todo") === col.id);
 
         return (
@@ -186,7 +202,6 @@ export default function KanbanBoard({
                     {showTop && (
                       <div className="absolute -top-2 left-0 right-0 h-1 bg-blue-500 rounded-full pointer-events-none" />
                     )}
-
                     <h4 className="font-semibold text-slate-800 text-sm mb-1">
                       {task.name}
                     </h4>
@@ -195,14 +210,12 @@ export default function KanbanBoard({
                         @{task.assignee}
                       </p>
                     )}
-
                     {showBottom && (
                       <div className="absolute -bottom-2 left-0 right-0 h-1 bg-blue-500 rounded-full pointer-events-none" />
                     )}
                   </div>
                 );
               })}
-
               {colTasks.length === 0 &&
                 dropState?.colId === col.id &&
                 !dropState.taskId && (

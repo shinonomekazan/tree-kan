@@ -4,6 +4,7 @@ import DetailPanel from "./DetailPanel";
 import { projectData } from "./mockData";
 import { nodeStorage } from "./storage";
 import type { TreeNode, NewNodePayload, LinkItem, TaskStatus } from "./types";
+import "./i18n";
 
 export default function App() {
   const [data, setData] = useState<TreeNode>(

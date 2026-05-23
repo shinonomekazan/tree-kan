@@ -1,4 +1,5 @@
 import type { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -6,26 +7,33 @@ interface ConfirmModalProps {
   onConfirm: () => void;
 }
 
-const ConfirmModal: FC<ConfirmModalProps> = ({ isOpen, onClose, onConfirm }) => {
+const ConfirmModal: FC<ConfirmModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+}) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-5 w-[350px] shadow-xl">
-        <h3 className="text-lg font-bold mb-2 text-slate-800">Xác nhận xóa</h3>
-        <p className="text-sm text-slate-600 mb-5">Bạn có chắc chắn muốn xóa liên kết này không?</p>
+        <h3 className="text-lg font-bold mb-2 text-slate-800">
+          {t("confirmDelete")}
+        </h3>
+        <p className="text-sm text-slate-600 mb-5">{t("deleteWarning")}</p>
         <div className="flex justify-end gap-2">
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
           >
-            Hủy
+            {t("cancel")}
           </button>
           <button
             onClick={onConfirm}
             className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
           >
-            Xóa
+            {t("delete")}
           </button>
         </div>
       </div>
