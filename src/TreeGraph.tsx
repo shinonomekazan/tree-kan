@@ -8,7 +8,9 @@ import KanbanBoard from "./KanbanBoard";
 interface TreeGraphProps {
   data: TreeNode;
   onNodeClick: (node: TreeNode) => void;
-  onUpdateStatus: (id: string, status: TaskStatus) => void;
+  onReorderTasks: (
+    updates: { id: string; status: TaskStatus; order: number }[],
+  ) => void;
 }
 
 type CustomNode = d3.HierarchyPointNode<TreeNode> & {
@@ -21,7 +23,7 @@ type CustomNode = d3.HierarchyPointNode<TreeNode> & {
 export default function TreeGraph({
   data,
   onNodeClick,
-  onUpdateStatus,
+  onReorderTasks,
 }: TreeGraphProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -32,16 +34,16 @@ export default function TreeGraph({
   const stats = useMemo(() => {
     let total = 0;
     let done = 0;
+    let review = 0;
     let inProgress = 0;
-    let blocked = 0;
     let todo = 0;
 
     const traverse = (node: TreeNode) => {
-      if (node.type === "task") {
+      if (node.type === "task" && node.status !== "archive") {
         total++;
         if (node.status === "done") done++;
+        else if (node.status === "review") review++;
         else if (node.status === "in-progress") inProgress++;
-        else if (node.status === "blocked") blocked++;
         else todo++;
       }
       if (node.children) {
@@ -56,21 +58,21 @@ export default function TreeGraph({
 
     return {
       done: getPercent(done),
+      review: getPercent(review),
       inProgress: getPercent(inProgress),
-      blocked: getPercent(blocked),
       todo: getPercent(todo),
     };
   }, [data]);
 
   const pieStyle = useMemo(() => {
     const p1 = stats.done;
-    const p2 = p1 + stats.inProgress;
-    const p3 = p2 + stats.blocked;
+    const p2 = p1 + stats.review;
+    const p3 = p2 + stats.inProgress;
     return {
       background: `conic-gradient(
         #3b82f6 0% ${p1}%,
-        #eab308 ${p1}% ${p2}%,
-        #ef4444 ${p2}% ${p3}%,
+        #a855f7 ${p1}% ${p2}%,
+        #eab308 ${p2}% ${p3}%,
         #94a3b8 ${p3}% 100%
       )`,
     };
@@ -130,7 +132,10 @@ export default function TreeGraph({
         .size([2 * Math.PI, radius])
         .separation((a, b) => (a.parent === b.parent ? 1 : 1.5) / a.depth);
 
-      const root = d3.hierarchy(data);
+      const root = d3.hierarchy(data, (d) =>
+        d.children?.filter((c) => c.status !== "archive"),
+      );
+
       const treeRoot = tree(root);
 
       treeRoot.each((d) => {
@@ -221,10 +226,10 @@ export default function TreeGraph({
         switch (d.data.status) {
           case "done":
             return "#3b82f6";
+          case "review":
+            return "#a855f7";
           case "in-progress":
             return "#eab308";
-          case "blocked":
-            return "#ef4444";
           default:
             return "#94a3b8";
         }
@@ -331,54 +336,56 @@ export default function TreeGraph({
           <KanbanBoard
             data={data}
             onNodeClick={onNodeClick}
-            onUpdateStatus={onUpdateStatus}
+            onReorderTasks={onReorderTasks}
           />
         </div>
       )}
 
-      <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-10">
-        <button
-          onClick={() => handleZoom(1.2)}
-          className="p-2.5 bg-white rounded-lg shadow-md border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
-        >
-          <ZoomIn size={20} />
-        </button>
-        <button
-          onClick={() => handleZoom(0.8)}
-          className="p-2.5 bg-white rounded-lg shadow-md border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
-        >
-          <ZoomOut size={20} />
-        </button>
-      </div>
+      {!isKanban && (
+        <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
+          <button
+            onClick={() => handleZoom(1.2)}
+            className="p-2 bg-white rounded-lg shadow-md border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
+          >
+            <ZoomIn size={18} />
+          </button>
+          <button
+            onClick={() => handleZoom(0.8)}
+            className="p-2 bg-white rounded-lg shadow-md border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
+          >
+            <ZoomOut size={18} />
+          </button>
+        </div>
+      )}
 
-      <div className="absolute top-6 left-6 z-10 flex flex-col gap-4">
-        <div className="bg-white/95 rounded-xl shadow-md border border-slate-200 w-80 overflow-hidden transition-all">
+      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+        <div className="bg-white/95 rounded-lg shadow-md border border-slate-200 w-56 overflow-hidden transition-all">
           <div
-            className="p-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors"
+            className="p-2.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors"
             onClick={() => setIsLegendOpen(!isLegendOpen)}
           >
-            <h1 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+            <h1 className="font-bold text-xs text-slate-800 flex items-center gap-2">
               Thống kê
             </h1>
             {isLegendOpen ? (
-              <ChevronUp size={16} className="text-slate-500" />
+              <ChevronUp size={14} className="text-slate-500" />
             ) : (
-              <ChevronDown size={16} className="text-slate-500" />
+              <ChevronDown size={14} className="text-slate-500" />
             )}
           </div>
 
           <div
             className={`transition-all duration-300 ease-in-out ${isLegendOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0"}`}
           >
-            <div className="p-4 flex items-center gap-6">
+            <div className="p-3 flex items-center gap-4">
               <div
-                className="w-20 h-20 rounded-full shadow-sm border border-slate-200 shrink-0"
+                className="w-14 h-14 rounded-full shadow-sm border border-slate-200 shrink-0"
                 style={pieStyle}
               />
-              <ul className="flex-1 space-y-2.5 text-xs font-medium text-slate-700">
+              <ul className="flex-1 space-y-2 text-[10px] font-medium text-slate-700">
                 <li className="flex items-center justify-between">
-                  <span className="flex items-center gap-2.5">
-                    <span className="w-3 h-3 rounded-full bg-blue-500 shadow-sm border border-white"></span>{" "}
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 shadow-sm border border-white"></span>
                     Hoàn thành
                   </span>
                   <span className="font-bold text-slate-900">
@@ -386,8 +393,17 @@ export default function TreeGraph({
                   </span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span className="flex items-center gap-2.5">
-                    <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-sm border border-white"></span>{" "}
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-purple-500 shadow-sm border border-white"></span>
+                    Review
+                  </span>
+                  <span className="font-bold text-slate-900">
+                    {stats.review}%
+                  </span>
+                </li>
+                <li className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-yellow-500 shadow-sm border border-white"></span>
                     Đang làm
                   </span>
                   <span className="font-bold text-slate-900">
@@ -395,17 +411,8 @@ export default function TreeGraph({
                   </span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span className="flex items-center gap-2.5">
-                    <span className="w-3 h-3 rounded-full bg-red-500 shadow-sm border border-white"></span>{" "}
-                    Tắc nghẽn
-                  </span>
-                  <span className="font-bold text-slate-900">
-                    {stats.blocked}%
-                  </span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span className="flex items-center gap-2.5">
-                    <span className="w-3 h-3 rounded-full bg-slate-400 shadow-sm border border-white"></span>{" "}
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-slate-400 shadow-sm border border-white"></span>
                     Chờ xử lý
                   </span>
                   <span className="font-bold text-slate-900">
@@ -419,9 +426,9 @@ export default function TreeGraph({
 
         <button
           onClick={() => setIsKanban(!isKanban)}
-          className="flex items-center justify-center gap-2 w-80 p-3 bg-white/95 rounded-xl shadow-md border border-slate-200 hover:bg-slate-50 text-slate-800 font-bold text-sm transition-colors"
+          className="flex items-center justify-center gap-2 w-56 p-2 bg-white/95 rounded-lg shadow-md border border-slate-200 hover:bg-slate-50 text-slate-800 font-bold text-xs transition-colors"
         >
-          <Kanban size={18} />
+          <Kanban size={14} />
           {isKanban ? "Hiển thị Đồ thị" : "Bảng Kanban"}
         </button>
       </div>

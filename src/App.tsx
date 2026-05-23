@@ -120,30 +120,31 @@ export default function App() {
     [selectedNode],
   );
 
-  const handleUpdateStatus = useCallback(
-    (nodeId: string, status: TaskStatus) => {
+  const handleReorderTasks = useCallback(
+    (updates: { id: string; status: TaskStatus; order: number }[]) => {
       setData((prevData) => {
         const newData = JSON.parse(JSON.stringify(prevData)) as TreeNode;
+        const updateMap = new Map(updates.map((u) => [u.id, u]));
         let updatedNode: TreeNode | null = null;
 
-        const updateNode = (node: TreeNode): boolean => {
-          if (node.id === nodeId) {
-            node.status = status;
-            updatedNode = node;
-            return true;
+        const traverse = (node: TreeNode) => {
+          if (updateMap.has(node.id)) {
+            const u = updateMap.get(node.id);
+            if (u) {
+              node.status = u.status;
+              node.order = u.order;
+            }
+            if (node.id === selectedNode?.id) updatedNode = node;
           }
           if (node.children) {
-            for (const child of node.children) {
-              if (updateNode(child)) return true;
-            }
+            node.children.forEach(traverse);
           }
-          return false;
         };
 
-        updateNode(newData);
+        traverse(newData);
         nodeStorage.saveTreeData(newData);
 
-        if (updatedNode && selectedNode?.id === nodeId) {
+        if (updatedNode) {
           setSelectedNode(updatedNode);
         }
 
@@ -159,7 +160,7 @@ export default function App() {
         <TreeGraph
           data={data}
           onNodeClick={setSelectedNode}
-          onUpdateStatus={handleUpdateStatus}
+          onReorderTasks={handleReorderTasks}
         />
       </div>
       <DetailPanel

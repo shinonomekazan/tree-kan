@@ -87,8 +87,9 @@ export default function CreateNodeModal({
               >
                 <option value="todo">Chờ xử lý</option>
                 <option value="in-progress">Đang thực hiện</option>
+                <option value="review">Review</option>
                 <option value="done">Hoàn thành</option>
-                <option value="blocked">Đang tắc nghẽn</option>
+                <option value="archive">Lưu trữ</option>
               </select>
             </div>
           )}

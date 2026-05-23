@@ -1,4 +1,4 @@
-export type TaskStatus = "done" | "in-progress" | "blocked" | "todo";
+export type TaskStatus = "todo" | "in-progress" | "review" | "done" | "archive";
 export type NodeType = "root" | "project" | "module" | "task";
 
 export interface LinkItem {
@@ -13,6 +13,7 @@ export interface TreeNode {
   name: string;
   type: NodeType;
   status?: TaskStatus;
+  order?: number;
   color?: string;
   description?: string;
   assignee?: string;
