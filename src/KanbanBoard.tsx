@@ -53,7 +53,7 @@ export default function KanbanBoard({
 
       return () => clearTimeout(timer);
     }
-  }, [focusedTaskId, tasks]);
+  }, [focusedTaskId]);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData("text/plain", id);
