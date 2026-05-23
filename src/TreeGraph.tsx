@@ -305,12 +305,10 @@ export default function TreeGraph({
         .attr("font-size", (d) =>
           d.data.type === "root"
             ? "16px"
-            : d.data.type === "project"
-              ? "14px"
-              : "12px",
+            : "14px"
         )
         .attr("font-weight", (d) =>
-          d.data.type === "root" || d.data.type === "project" ? "bold" : "500",
+          d.data.type === "root" ? "bold" : "500",
         )
         .attr("fill", "#1e293b")
         .attr("stroke", "#ffffff")

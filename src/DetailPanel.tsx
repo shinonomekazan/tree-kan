@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { FC } from "react";
-import { Code, Plus } from "lucide-react";
+import { Code, Plus, Edit2 } from "lucide-react";
 import slackIcon from "./assets/slack-icon.png";
 import githubIcon from "./assets/github-icon.png";
 import type { TreeNode, NewNodePayload, LinkItem } from "./types";
@@ -8,6 +8,7 @@ import CreateNodeModal from "./CreateNodeModal";
 import LinkModal from "./LinkModal";
 import ConfirmModal from "./ConfirmModal";
 import LinkGroup from "./LinkGroup";
+import RenameNodeModal from "./RenameNodeModal";
 
 interface DetailPanelProps {
   selectedNode: TreeNode | null;
@@ -18,6 +19,7 @@ interface DetailPanelProps {
     githubLinks?: LinkItem[],
   ) => void;
   onUpdateDescription: (nodeId: string, description: string) => void;
+  onUpdateNodeName: (nodeId: string, name: string) => void;
 }
 
 const DetailPanel: FC<DetailPanelProps> = ({
@@ -25,8 +27,10 @@ const DetailPanel: FC<DetailPanelProps> = ({
   onAddChild,
   onUpdateNodeLinks,
   onUpdateDescription,
+  onUpdateNodeName,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [linkModalState, setLinkModalState] = useState<{
     isOpen: boolean;
@@ -119,13 +123,22 @@ const DetailPanel: FC<DetailPanelProps> = ({
           <h2 className="text-xl font-bold text-slate-800 truncate pr-4">
             {selectedNode.name}
           </h2>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="p-1.5 hover:bg-blue-100 text-blue-600 rounded-full transition-colors shrink-0"
-            title="Thêm node con"
-          >
-            <Plus size={18} />
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => setIsRenameModalOpen(true)}
+              className="p-1.5 hover:bg-slate-200 text-slate-600 rounded-full transition-colors"
+              title="Đổi tên node"
+            >
+              <Edit2 size={18} />
+            </button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="p-1.5 hover:bg-blue-100 text-blue-600 rounded-full transition-colors"
+              title="Thêm node con"
+            >
+              <Plus size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -229,6 +242,15 @@ const DetailPanel: FC<DetailPanelProps> = ({
           setDeleteConfirmState((prev) => ({ ...prev, isOpen: false }))
         }
         onConfirm={handleDeleteLink}
+      />
+      <RenameNodeModal
+        isOpen={isRenameModalOpen}
+        initialName={selectedNode.name}
+        onClose={() => setIsRenameModalOpen(false)}
+        onSubmit={(name) => {
+          onUpdateNodeName(selectedNode.id, name);
+          setIsRenameModalOpen(false);
+        }}
       />
     </>
   );

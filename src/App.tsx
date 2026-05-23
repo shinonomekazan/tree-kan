@@ -154,6 +154,39 @@ export default function App() {
     [selectedNode],
   );
 
+  const handleUpdateNodeName = useCallback(
+    (nodeId: string, name: string) => {
+      setData((prevData) => {
+        const newData = JSON.parse(JSON.stringify(prevData)) as TreeNode;
+        let updatedNode: TreeNode | null = null;
+
+        const updateNode = (node: TreeNode): boolean => {
+          if (node.id === nodeId) {
+            node.name = name;
+            updatedNode = node;
+            return true;
+          }
+          if (node.children) {
+            for (const child of node.children) {
+              if (updateNode(child)) return true;
+            }
+          }
+          return false;
+        };
+
+        updateNode(newData);
+        nodeStorage.saveTreeData(newData);
+
+        if (updatedNode && selectedNode?.id === nodeId) {
+          setSelectedNode(updatedNode);
+        }
+
+        return newData;
+      });
+    },
+    [selectedNode],
+  );
+
   return (
     <div className="flex w-screen h-screen font-sans overflow-hidden bg-slate-50">
       <div className="flex-1 relative w-full h-full">
@@ -168,6 +201,7 @@ export default function App() {
         onAddChild={handleAddChild}
         onUpdateNodeLinks={handleUpdateNodeLinks}
         onUpdateDescription={handleUpdateDescription}
+        onUpdateNodeName={handleUpdateNodeName}
       />
     </div>
   );
