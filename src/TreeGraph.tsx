@@ -56,7 +56,7 @@ export default function TreeGraph({
         const content = event.target?.result as string;
         nodeStorage.importAllData(JSON.parse(content));
         window.location.href = window.location.pathname;
-      } catch {}
+      } catch { }
     };
     reader.readAsText(file);
 
@@ -163,7 +163,6 @@ export default function TreeGraph({
 
       treeRoot.each((d) => {
         const node = d as CustomNode;
-        node.angle = node.x;
 
         const savedPosition = nodeStorage.getPosition(node.data.id);
         if (savedPosition) {
@@ -173,6 +172,13 @@ export default function TreeGraph({
           const angleRad = node.x - Math.PI / 2;
           node.cx = node.y * Math.cos(angleRad);
           node.cy = node.y * Math.sin(angleRad);
+        }
+
+        if (node.parent) {
+          const parentNode = node.parent as CustomNode;
+          node.angle = node.cx > parentNode.cx ? 0 : Math.PI;
+        } else {
+          node.angle = node.x;
         }
 
         if (node.depth === 1) {
@@ -228,27 +234,66 @@ export default function TreeGraph({
         .drag<SVGGElement, CustomNode>()
         .filter((e: MouseEvent) => e.button === 0)
         .on("drag", function (event, d) {
-          d.cx += event.dx;
-          d.cy += event.dy;
+          if (d.data.type === "root") {
+            return;
+          }
+          const descendants = d.descendants() as CustomNode[];
+          const descendantIds = new Set(descendants.map((n) => n.data.id));
 
-          d3.select(this).attr("transform", `translate(${d.cx},${d.cy})`);
+          descendants.forEach((n) => {
+            n.cx += event.dx;
+            n.cy += event.dy;
+          });
+
+          nodeGroup
+            .filter((n) => descendantIds.has(n.data.id))
+            .attr("transform", (n) => `translate(${n.cx},${n.cy})`);
 
           linkPath
             .filter(
               (l) =>
-                l.source.data.id === d.data.id ||
-                l.target.data.id === d.data.id,
+                descendantIds.has(l.source.data.id) ||
+                descendantIds.has(l.target.data.id),
             )
-            .attr("d", (d) => {
-              const source = d.source as CustomNode;
-              const target = d.target as CustomNode;
+            .attr("d", (l) => {
+              const source = l.source as CustomNode;
+              const target = l.target as CustomNode;
               return target.data.type !== "task"
                 ? `M${source.cx},${source.cy} L${target.cx},${target.cy}`
-                : radialLinkGen(d);
+                : radialLinkGen(l);
             });
         })
         .on("end", function (event, d) {
-          nodeStorage.savePosition(d.data.id, d.cx, d.cy);
+          const descendants = d.descendants() as CustomNode[];
+          const descendantIds = new Set(descendants.map((n) => n.data.id));
+
+          descendants.forEach((n) => {
+            if (n.parent) {
+              const parentNode = n.parent as CustomNode;
+              n.angle = n.cx > parentNode.cx ? 0 : Math.PI;
+            }
+          });
+
+          nodeGroup
+            .filter((n) => descendantIds.has(n.data.id))
+            .select("text")
+            .attr("x", (n) => {
+              if (n.data.type === "root") return 0;
+              if (n.parent && n.children && n.children.length > 0) return 16;
+              if (n.parent && (!n.children || n.children.length === 0)) {
+                return n.angle < Math.PI ? 16 : -16;
+              }
+              return 16;
+            })
+            .attr("text-anchor", (n) => {
+              if (n.data.type === "root") return "middle";
+              if (n.parent && n.children && n.children.length > 0)
+                return "start";
+              if (n.parent && (!n.children || n.children.length === 0)) {
+                return n.angle < Math.PI ? "start" : "end";
+              }
+              return "start";
+            });
         });
 
       nodeGroup.call(drag as (selection: typeof nodeGroup) => void);
@@ -315,11 +360,19 @@ export default function TreeGraph({
         .attr("dy", (d) => (d.data.type === "root" ? "32px" : "0.31em"))
         .attr("x", (d) => {
           if (d.data.type === "root") return 0;
-          return d.angle < Math.PI === !d.children ? 16 : -16;
+          if (d.parent && d.children && d.children.length > 0) return 16;
+          if (d.parent && (!d.children || d.children.length === 0)) {
+            return d.angle < Math.PI ? 16 : -16;
+          }
+          return 16;
         })
         .attr("text-anchor", (d) => {
           if (d.data.type === "root") return "middle";
-          return d.angle < Math.PI === !d.children ? "start" : "end";
+          if (d.parent && d.children && d.children.length > 0) return "start";
+          if (d.parent && (!d.children || d.children.length === 0)) {
+            return d.angle < Math.PI ? "start" : "end";
+          }
+          return "start";
         })
         .text((d) => d.data.name)
         .attr("font-size", (d) => (d.data.type === "root" ? "16px" : "14px"))
