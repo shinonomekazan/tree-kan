@@ -37,6 +37,10 @@ export default function App() {
     }
   }, []);
 
+  const handleSave = useCallback(() => {
+    nodeStorage.saveTreeData(data);
+  }, [data]);
+
   const handleAddChild = useCallback(
     (parentId: string, payload: NewNodePayload) => {
       setData((prevData) => {
@@ -76,6 +80,7 @@ export default function App() {
     },
     [selectedNode],
   );
+
   const handleUpdateNodeLinks = useCallback(
     (nodeId: string, slackLinks?: LinkItem[], githubLinks?: LinkItem[]) => {
       setData((prevData) => {
@@ -109,6 +114,7 @@ export default function App() {
     },
     [selectedNode],
   );
+
   const handleUpdateDescription = useCallback(
     (nodeId: string, description: string) => {
       setData((prevData) => {
@@ -141,6 +147,7 @@ export default function App() {
     },
     [selectedNode],
   );
+
   const handleReorderTasks = useCallback(
     (updates: { id: string; status: TaskStatus; order: number }[]) => {
       setData((prevData) => {
@@ -174,6 +181,7 @@ export default function App() {
     },
     [selectedNode],
   );
+
   const handleUpdateNodeName = useCallback(
     (nodeId: string, name: string) => {
       setData((prevData) => {
@@ -206,10 +214,12 @@ export default function App() {
     },
     [selectedNode],
   );
+
   const handleOpenKanban = useCallback((id: string) => {
     setIsKanban(true);
     setFocusedTaskId(id);
   }, []);
+
   const handleDeleteNode = useCallback(
     (nodeId: string) => {
       setData((prevData) => {
@@ -255,6 +265,7 @@ export default function App() {
           isKanban={isKanban}
           onToggleKanban={() => setIsKanban(!isKanban)}
           focusedTaskId={focusedTaskId}
+          onSave={handleSave}
         />
       </div>
       <DetailPanel

@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import * as d3 from "d3";
-import { ZoomIn, ZoomOut, ChevronDown, ChevronUp, Kanban } from "lucide-react";
+import {
+  ZoomIn,
+  ZoomOut,
+  ChevronDown,
+  ChevronUp,
+  Kanban,
+  Save,
+  Loader2,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TreeNode, TaskStatus } from "./types";
 import { nodeStorage } from "./storage";
@@ -15,6 +23,7 @@ interface TreeGraphProps {
   isKanban: boolean;
   onToggleKanban: () => void;
   focusedTaskId: string | null;
+  onSave: () => void;
 }
 
 type CustomNode = d3.HierarchyPointNode<TreeNode> & {
@@ -31,6 +40,7 @@ export default function TreeGraph({
   isKanban,
   onToggleKanban,
   focusedTaskId,
+  onSave,
 }: TreeGraphProps) {
   const { t, i18n } = useTranslation();
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -39,12 +49,22 @@ export default function TreeGraph({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLegendOpen, setIsLegendOpen] = useState(false);
   const [showImportBtn, setShowImportBtn] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has("import")) {
       setShowImportBtn(true);
     }
   }, []);
+
+  const handleSaveClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setIsSaving(true);
+    onSave();
+    setTimeout(() => {
+      setIsSaving(false);
+    }, 400);
+  };
 
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -56,7 +76,7 @@ export default function TreeGraph({
         const content = event.target?.result as string;
         nodeStorage.importAllData(JSON.parse(content));
         window.location.href = window.location.pathname;
-      } catch { }
+      } catch {}
     };
     reader.readAsText(file);
 
@@ -272,6 +292,7 @@ export default function TreeGraph({
               const parentNode = n.parent as CustomNode;
               n.angle = n.cx > parentNode.cx ? 0 : Math.PI;
             }
+            nodeStorage.savePosition(n.data.id, n.cx, n.cy);
           });
 
           nodeGroup
@@ -427,35 +448,49 @@ export default function TreeGraph({
         onContextMenu={(e) => e.preventDefault()}
       />
 
-      <div className="absolute top-4 right-4 z-20 flex gap-2">
-        {showImportBtn && (
-          <>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-            >
-              Import
-            </button>
-            <input
-              type="file"
-              accept=".json,application/json"
-              ref={fileInputRef}
-              className="hidden"
-              onChange={handleImportFile}
-            />
-          </>
-        )}
+      <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
+        <div className="flex gap-2">
+          {showImportBtn && (
+            <>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+              >
+                Import
+              </button>
+              <input
+                type="file"
+                accept=".json,application/json"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleImportFile}
+              />
+            </>
+          )}
+          <button
+            onClick={() => i18n.changeLanguage("en")}
+            className={`px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border ${i18n.language === "en" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+          >
+            EN
+          </button>
+          <button
+            onClick={() => i18n.changeLanguage("ja")}
+            className={`px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border ${i18n.language === "ja" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+          >
+            JA
+          </button>
+        </div>
         <button
-          onClick={() => i18n.changeLanguage("en")}
-          className={`px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border ${i18n.language === "en" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
+          onClick={handleSaveClick}
+          disabled={isSaving}
+          className="flex items-center justify-center gap-1.5 w-full px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-all border bg-blue-600 text-white border-blue-600 hover:bg-blue-700 disabled:opacity-75 disabled:cursor-not-allowed"
         >
-          EN
-        </button>
-        <button
-          onClick={() => i18n.changeLanguage("ja")}
-          className={`px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border ${i18n.language === "ja" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
-        >
-          JA
+          {isSaving ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Save size={14} />
+          )}
+          {isSaving ? "Saving..." : "Save"}
         </button>
       </div>
 
