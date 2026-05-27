@@ -23,6 +23,7 @@ interface DetailPanelProps {
   onUpdateNodeName: (nodeId: string, name: string) => void;
   onOpenKanban: (id: string) => void;
   onDeleteNode: (nodeId: string) => void;
+  onSelectRoot?: () => void;
 }
 
 const DetailPanel: FC<DetailPanelProps> = ({
@@ -33,6 +34,7 @@ const DetailPanel: FC<DetailPanelProps> = ({
   onUpdateNodeName,
   onOpenKanban,
   onDeleteNode,
+  onSelectRoot,
 }) => {
   const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -191,19 +193,10 @@ const DetailPanel: FC<DetailPanelProps> = ({
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              onBlur={() => onUpdateDescription(selectedNode.id, description)}
               className="w-full text-sm text-slate-600 bg-slate-50 border border-slate-200 p-3 rounded-lg leading-relaxed outline-none focus:border-blue-400 min-h-[100px] resize-y transition-colors"
               placeholder={t("techDescPh")}
             />
-            <div className="flex justify-end">
-              <button
-                onClick={() =>
-                  onUpdateDescription(selectedNode.id, description)
-                }
-                className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
-              >
-                {t("save")}
-              </button>
-            </div>
           </div>
 
           <div className="space-y-4">
@@ -268,6 +261,7 @@ const DetailPanel: FC<DetailPanelProps> = ({
         onConfirm={() => {
           onDeleteNode(selectedNode.id);
           setIsDeleteNodeModalOpen(false);
+          if (onSelectRoot) onSelectRoot();
         }}
       />
       <RenameNodeModal
