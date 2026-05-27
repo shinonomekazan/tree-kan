@@ -60,6 +60,8 @@ export default function TreeGraph({
   const handleSaveClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setIsSaving(true);
+    nodeStorage.saveTreeData(data);
+    nodeStorage.commit();
     onSave();
     setTimeout(() => {
       setIsSaving(false);
