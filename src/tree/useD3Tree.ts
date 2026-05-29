@@ -20,8 +20,14 @@ export function useD3Tree(
   svgRef: React.RefObject<SVGSVGElement | null>,
   data: TreeNode,
   onNodeClick: (node: TreeNode) => void,
+  isLocked: boolean = false,
 ) {
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  const isLockedRef = useRef(isLocked);
+
+  useEffect(() => {
+    isLockedRef.current = isLocked;
+  }, [isLocked]);
 
   useEffect(() => {
     if (!wrapperRef.current || !svgRef.current) return;
@@ -159,7 +165,7 @@ export function useD3Tree(
 
       const drag = d3
         .drag<SVGGElement, CustomNode>()
-        .filter((e: MouseEvent) => e.button === 0)
+        .filter((e: MouseEvent) => !isLockedRef.current && e.button === 0)
         .on("drag", function (event, d) {
           if (d.data.type === "root") {
             return;

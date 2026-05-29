@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, Lock, Unlock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { nodeStorage } from "../save-data/storage";
 import type { TreeNode } from "../types";
@@ -7,10 +7,17 @@ import type { TreeNode } from "../types";
 interface Props {
   data: TreeNode;
   onSave: () => void;
+  isLocked: boolean;
+  onToggleLock: () => void;
 }
 
-export default function TreeGraphHeader({ data, onSave }: Props) {
-  const { i18n } = useTranslation();
+export default function TreeGraphHeader({
+  data,
+  onSave,
+  isLocked,
+  onToggleLock,
+}: Props) {
+  const { t, i18n } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showImportBtn, setShowImportBtn] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -42,7 +49,7 @@ export default function TreeGraphHeader({ data, onSave }: Props) {
         const content = event.target?.result as string;
         nodeStorage.importAllData(JSON.parse(content));
         window.location.href = window.location.pathname;
-      } catch {}
+      } catch { }
     };
     reader.readAsText(file);
 
@@ -53,6 +60,7 @@ export default function TreeGraphHeader({ data, onSave }: Props) {
 
   return (
     <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
+      {/* Hàng trên: Gồm Import và các nút chuyển ngôn ngữ */}
       <div className="flex gap-2">
         {showImportBtn && (
           <>
@@ -84,18 +92,33 @@ export default function TreeGraphHeader({ data, onSave }: Props) {
           JA
         </button>
       </div>
-      <button
-        onClick={handleSaveClick}
-        disabled={isSaving}
-        className="flex items-center justify-center gap-1.5 w-full px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-all border bg-blue-600 text-white border-blue-600 hover:bg-blue-700 disabled:opacity-75 disabled:cursor-not-allowed"
-      >
-        {isSaving ? (
-          <Loader2 size={14} className="animate-spin" />
-        ) : (
-          <Save size={14} />
-        )}
-        {isSaving ? "Saving..." : "Save"}
-      </button>
+
+      {/* Hàng dưới: Gồm Lock và Save nằm ngang hàng nhau */}
+      <div className="flex gap-2 w-full">
+        <button
+          onClick={onToggleLock}
+          className={`flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border ${isLocked
+              ? "bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200"
+              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+            }`}
+        >
+          {isLocked ? <Lock size={14} /> : <Unlock size={14} />}
+          {isLocked ? t("locked", "Locked") : t("unlocked", "Unlock")}
+        </button>
+
+        <button
+          onClick={handleSaveClick}
+          disabled={isSaving}
+          className="flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-all border bg-blue-600 text-white border-blue-600 hover:bg-blue-700 disabled:opacity-75 disabled:cursor-not-allowed"
+        >
+          {isSaving ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Save size={14} />
+          )}
+          {isSaving ? "Saving..." : "Save"}
+        </button>
+      </div>
     </div>
   );
 }

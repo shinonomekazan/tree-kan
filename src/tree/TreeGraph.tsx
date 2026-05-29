@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { ZoomIn, ZoomOut, Kanban } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TreeNode, TaskStatus } from "../types";
@@ -31,8 +31,15 @@ export default function TreeGraph({
   const { t } = useTranslation();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const [isLocked, setIsLocked] = useState(true);
 
-  const { handleZoom } = useD3Tree(wrapperRef, svgRef, data, onNodeClick);
+  const { handleZoom } = useD3Tree(
+    wrapperRef,
+    svgRef,
+    data,
+    onNodeClick,
+    isLocked,
+  );
 
   return (
     <div
@@ -45,7 +52,12 @@ export default function TreeGraph({
         onContextMenu={(e) => e.preventDefault()}
       />
 
-      <TreeGraphHeader data={data} onSave={onSave} />
+      <TreeGraphHeader
+        data={data}
+        onSave={onSave}
+        isLocked={isLocked}
+        onToggleLock={() => setIsLocked(!isLocked)}
+      />
 
       {isKanban && (
         <div className="absolute inset-0 z-0 bg-transparent">
