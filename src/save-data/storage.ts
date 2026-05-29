@@ -1,4 +1,4 @@
-import type { TreeNode } from "./types";
+import type { TreeNode } from "../types";
 
 export interface INodeStorage {
   savePosition(id: string, cx: number, cy: number): void;

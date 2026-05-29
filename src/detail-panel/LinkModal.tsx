@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import type { FC, FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import type { LinkItem } from "./types";
+import type { LinkItem } from "../types";
 
 interface LinkModalProps {
   isOpen: boolean;

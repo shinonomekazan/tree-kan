@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TreeNode, TaskStatus } from "./types";
-import { nodeStorage } from "./storage";
+import { nodeStorage } from "./save-data/storage";
 import KanbanBoard from "./KanbanBoard";
 
 interface TreeGraphProps {
@@ -78,7 +78,7 @@ export default function TreeGraph({
         const content = event.target?.result as string;
         nodeStorage.importAllData(JSON.parse(content));
         window.location.href = window.location.pathname;
-      } catch {}
+      } catch { }
     };
     reader.readAsText(file);
 
@@ -285,7 +285,7 @@ export default function TreeGraph({
                 : radialLinkGen(l);
             });
         })
-        .on("end", function (event, d) {
+        .on("end", function (d) {
           const descendants = d.descendants() as CustomNode[];
           const descendantIds = new Set(descendants.map((n) => n.data.id));
 

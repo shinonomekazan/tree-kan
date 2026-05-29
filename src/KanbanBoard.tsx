@@ -205,11 +205,6 @@ export default function KanbanBoard({
                     <h4 className="font-semibold text-slate-800 text-sm mb-1">
                       {task.name}
                     </h4>
-                    {task.assignee && (
-                      <p className="text-xs text-slate-500 font-medium">
-                        @{task.assignee}
-                      </p>
-                    )}
                     {showBottom && (
                       <div className="absolute -bottom-2 left-0 right-0 h-1 bg-blue-500 rounded-full pointer-events-none" />
                     )}

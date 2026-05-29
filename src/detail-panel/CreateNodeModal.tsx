@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { NodeType, TaskStatus, NewNodePayload } from "./types";
+import type { NodeType, TaskStatus, NewNodePayload } from "../types";
 
 interface CreateNodeModalProps {
   isOpen: boolean;

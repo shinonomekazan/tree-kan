@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
 import TreeGraph from "./TreeGraph";
-import DetailPanel from "./DetailPanel";
-import { projectData } from "./mockData";
-import { nodeStorage } from "./storage";
+import DetailPanel from "./detail-panel/DetailPanel";
+import { projectData } from "./save-data/mockData";
+import { nodeStorage } from "./save-data/storage";
 import type { TreeNode, NewNodePayload, LinkItem, TaskStatus } from "./types";
 import "./i18n";
 

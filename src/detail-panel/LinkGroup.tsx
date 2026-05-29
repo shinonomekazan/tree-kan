@@ -1,6 +1,6 @@
 import { Edit, Trash2, ExternalLink, Plus } from "lucide-react";
 import type { FC, ReactNode } from "react";
-import type { LinkItem } from "./types";
+import type { LinkItem } from "../types";
 
 interface LinkGroupProps {
   title: string;

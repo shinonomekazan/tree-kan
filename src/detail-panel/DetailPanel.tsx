@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import type { FC } from "react";
 import { Code, Plus, Edit2, KanbanSquare, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import slackIcon from "./assets/slack-icon.png";
-import githubIcon from "./assets/github-icon.png";
-import type { TreeNode, NewNodePayload, LinkItem } from "./types";
+import slackIcon from "../assets/slack-icon.png";
+import githubIcon from "../assets/github-icon.png";
+import type { TreeNode, NewNodePayload, LinkItem } from "../types";
 import CreateNodeModal from "./CreateNodeModal";
 import LinkModal from "./LinkModal";
-import ConfirmModal from "./ConfirmModal";
+import ConfirmModal from "../ConfirmModal";
 import LinkGroup from "./LinkGroup";
-import RenameNodeModal from "./RenameNodeModal";
+import RenameNodeModal from "./RenameNodeModal"
 
 interface DetailPanelProps {
   selectedNode: TreeNode | null;
@@ -159,8 +159,7 @@ const DetailPanel: FC<DetailPanelProps> = ({
                 {t("status")}:
               </span>
               <span
-                className={`px-3 py-1 rounded-full text-xs font-bold text-white ${
-                  selectedNode.status === "done"
+                className={`px-3 py-1 rounded-full text-xs font-bold text-white ${selectedNode.status === "done"
                     ? "bg-blue-500"
                     : selectedNode.status === "review"
                       ? "bg-purple-500"
@@ -169,7 +168,7 @@ const DetailPanel: FC<DetailPanelProps> = ({
                         : selectedNode.status === "archive"
                           ? "bg-slate-600"
                           : "bg-slate-400"
-                }`}
+                  }`}
               >
                 {t(
                   selectedNode.status === "in-progress"
