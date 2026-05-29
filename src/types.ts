@@ -20,6 +20,7 @@ export interface TreeNode {
   children?: TreeNode[];
   slackLinks?: LinkItem[];
   githubLinks?: LinkItem[];
+  isHiddenLink?: boolean;
 }
 
 export interface NewNodePayload {

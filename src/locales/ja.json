@@ -34,5 +34,8 @@
   "newNamePh": "新しい名前を入力...",
   "statistics": "統計",
   "showGraph": "グラフを表示",
-  "kanbanBoard": "カンバンボード"
+  "kanbanBoard": "カンバンボード",
+  "deleteNode": "ノードを削除",
+  "deleteNodeKeepChildren": "ノードのみ削除 (子要素を保持)",
+  "deleteNodeAndChildren": "ノードとすべての your 子要素を削除"
 }

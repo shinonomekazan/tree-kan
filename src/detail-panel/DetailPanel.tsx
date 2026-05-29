@@ -9,7 +9,8 @@ import CreateNodeModal from "./CreateNodeModal";
 import LinkModal from "./LinkModal";
 import ConfirmModal from "../ConfirmModal";
 import LinkGroup from "./LinkGroup";
-import RenameNodeModal from "./RenameNodeModal"
+import RenameNodeModal from "./RenameNodeModal";
+import DeleteNodeModal from "./DeleteNodeModal";
 
 interface DetailPanelProps {
   selectedNode: TreeNode | null;
@@ -22,7 +23,7 @@ interface DetailPanelProps {
   onUpdateDescription: (nodeId: string, description: string) => void;
   onUpdateNodeName: (nodeId: string, name: string) => void;
   onOpenKanban: (id: string) => void;
-  onDeleteNode: (nodeId: string) => void;
+  onDeleteNode: (nodeId: string, keepChildren: boolean) => void;
   onSelectRoot?: () => void;
 }
 
@@ -143,12 +144,14 @@ const DetailPanel: FC<DetailPanelProps> = ({
             >
               <Plus size={18} />
             </button>
-            <button
-              onClick={() => setIsDeleteNodeModalOpen(true)}
-              className="p-1.5 hover:bg-red-100 text-red-600 rounded-full transition-colors"
-            >
-              <Trash2 size={18} />
-            </button>
+            {selectedNode.type !== "root" && (
+              <button
+                onClick={() => setIsDeleteNodeModalOpen(true)}
+                className="p-1.5 hover:bg-red-100 text-red-600 rounded-full transition-colors"
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -159,7 +162,8 @@ const DetailPanel: FC<DetailPanelProps> = ({
                 {t("status")}:
               </span>
               <span
-                className={`px-3 py-1 rounded-full text-xs font-bold text-white ${selectedNode.status === "done"
+                className={`px-3 py-1 rounded-full text-xs font-bold text-white ${
+                  selectedNode.status === "done"
                     ? "bg-blue-500"
                     : selectedNode.status === "review"
                       ? "bg-purple-500"
@@ -168,7 +172,7 @@ const DetailPanel: FC<DetailPanelProps> = ({
                         : selectedNode.status === "archive"
                           ? "bg-slate-600"
                           : "bg-slate-400"
-                  }`}
+                }`}
               >
                 {t(
                   selectedNode.status === "in-progress"
@@ -254,13 +258,12 @@ const DetailPanel: FC<DetailPanelProps> = ({
         }
         onConfirm={handleDeleteLink}
       />
-      <ConfirmModal
+      <DeleteNodeModal
         isOpen={isDeleteNodeModalOpen}
         onClose={() => setIsDeleteNodeModalOpen(false)}
-        onConfirm={() => {
-          onDeleteNode(selectedNode.id);
+        onConfirm={(keepChildren) => {
           setIsDeleteNodeModalOpen(false);
-          if (onSelectRoot) onSelectRoot();
+          onDeleteNode(selectedNode.id, keepChildren);
         }}
       />
       <RenameNodeModal

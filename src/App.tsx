@@ -3,6 +3,7 @@ import TreeGraph from "./tree/TreeGraph";
 import DetailPanel from "./detail-panel/DetailPanel";
 import { projectData } from "./save-data/mockData";
 import { nodeStorage } from "./save-data/storage";
+import { currentPositionsCache } from "./tree/useD3Tree";
 import type { TreeNode, NewNodePayload, LinkItem, TaskStatus } from "./types";
 import "./i18n";
 
@@ -221,18 +222,33 @@ export default function App() {
   }, []);
 
   const handleDeleteNode = useCallback(
-    (nodeId: string) => {
+    (nodeId: string, keepChildren: boolean = false) => {
       setData((prevData) => {
         if (prevData.id === nodeId) return prevData;
 
         const newData = JSON.parse(JSON.stringify(prevData)) as TreeNode;
+
+        const freezePositions = (n: TreeNode) => {
+          const pos = currentPositionsCache.get(n.id);
+          if (pos) nodeStorage.savePosition(n.id, pos.cx, pos.cy);
+          n.children?.forEach(freezePositions);
+        };
+        freezePositions(newData);
+
+        let deletedNodeChildren: TreeNode[] = [];
 
         const removeNode = (node: TreeNode): boolean => {
           if (!node.children) return false;
 
           const index = node.children.findIndex((child) => child.id === nodeId);
           if (index !== -1) {
-            node.children.splice(index, 1);
+            const [deletedNode] = node.children.splice(index, 1);
+            if (keepChildren && deletedNode.children) {
+              deletedNodeChildren = deletedNode.children.map((child) => ({
+                ...child,
+                isHiddenLink: true,
+              }));
+            }
             return true;
           }
 
@@ -242,11 +258,16 @@ export default function App() {
           return false;
         };
 
-        removeNode(newData);
-        nodeStorage.saveTreeData(newData);
+        if (removeNode(newData)) {
+          if (keepChildren && deletedNodeChildren.length > 0) {
+            if (!newData.children) newData.children = [];
+            newData.children.push(...deletedNodeChildren);
+          }
+          nodeStorage.saveTreeData(newData);
+        }
 
         if (selectedNode?.id === nodeId) {
-          setSelectedNode(null);
+          setSelectedNode(newData);
         }
 
         return newData;
@@ -276,6 +297,7 @@ export default function App() {
         onUpdateNodeName={handleUpdateNodeName}
         onOpenKanban={handleOpenKanban}
         onDeleteNode={handleDeleteNode}
+        onSelectRoot={() => setSelectedNode(data)}
       />
     </div>
   );

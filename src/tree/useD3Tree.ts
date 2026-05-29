@@ -3,6 +3,11 @@ import * as d3 from "d3";
 import type { TreeNode } from "../types";
 import { nodeStorage } from "../save-data/storage";
 
+export const currentPositionsCache = new Map<
+  string,
+  { cx: number; cy: number }
+>();
+
 type CustomNode = d3.HierarchyPointNode<TreeNode> & {
   branchColor?: string;
   cx: number;
@@ -105,6 +110,8 @@ export function useD3Tree(
         } else {
           node.branchColor = "#cbd5e1";
         }
+
+        currentPositionsCache.set(node.data.id, { cx: node.cx, cy: node.cy });
       });
 
       const nodesData = treeRoot.descendants() as CustomNode[];
@@ -125,6 +132,9 @@ export function useD3Tree(
         .attr("stroke", "#3a3838")
         .attr("stroke-width", (d) => Math.max(1.5, 4 - d.target.depth))
         .attr("opacity", 0.6)
+        .attr("display", (d) =>
+          (d.target as CustomNode).data.isHiddenLink ? "none" : "block",
+        )
         .attr("d", (d) => {
           const source = d.source as CustomNode;
           const target = d.target as CustomNode;
@@ -180,7 +190,7 @@ export function useD3Tree(
                 : radialLinkGen(l);
             });
         })
-        .on("end", function (d) {
+        .on("end", function (event, d) {
           const descendants = d.descendants() as CustomNode[];
           const descendantIds = new Set(descendants.map((n) => n.data.id));
 
@@ -190,6 +200,7 @@ export function useD3Tree(
               n.angle = n.cx > parentNode.cx ? 0 : Math.PI;
             }
             nodeStorage.savePosition(n.data.id, n.cx, n.cy);
+            currentPositionsCache.set(n.data.id, { cx: n.cx, cy: n.cy });
           });
 
           nodeGroup

@@ -34,5 +34,8 @@
   "newNamePh": "Enter new name...",
   "statistics": "Statistics",
   "showGraph": "Close Kanban Board",
-  "kanbanBoard": "Kanban Board"
+  "kanbanBoard": "Kanban Board",
+  "deleteNode": "Delete Node",
+  "deleteNodeKeepChildren": "Delete node only (Keep children)",
+  "deleteNodeAndChildren": "Delete node and all children"
 }
