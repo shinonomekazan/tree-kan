@@ -14,6 +14,9 @@ export default function App() {
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(
     () => nodeStorage.getTreeData() || projectData,
   );
+  const [prevSelectedNode, setPrevSelectedNode] = useState<TreeNode | null>(
+    null,
+  );
   const [isKanban, setIsKanban] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
 
@@ -221,6 +224,94 @@ export default function App() {
     setFocusedTaskId(id);
   }, []);
 
+  const handleToggleLink = useCallback(
+    (id1: string, id2: string, action: "create" | "delete") => {
+      setData((prevData) => {
+        const newData = JSON.parse(JSON.stringify(prevData)) as TreeNode;
+
+        const findNode = (
+          node: TreeNode,
+          id: string,
+          parent: TreeNode | null = null,
+        ): { node: TreeNode; parent: TreeNode | null } | null => {
+          if (node.id === id) return { node, parent };
+
+          for (const child of node.children ?? []) {
+            const result = findNode(child, id, node);
+            if (result) return result;
+          }
+
+          return null;
+        };
+
+        const sourceResult = findNode(newData, id1);
+        const targetResult = findNode(newData, id2);
+
+        if (!sourceResult || !targetResult) return prevData;
+
+        const sourceNode = sourceResult.node;
+        const targetNode = targetResult.node;
+        const currentTargetParent = targetResult.parent;
+
+        if (action === "delete") {
+          if (sourceNode.children?.some((child: TreeNode) => child.id === targetNode.id)) {
+            sourceNode.children = sourceNode.children.filter(
+              (child: TreeNode) => child.id !== targetNode.id,
+            );
+
+            if (!newData.children) newData.children = [];
+            newData.children.push(targetNode);
+          } else if (
+            targetNode.children?.some((child: TreeNode) => child.id === sourceNode.id)
+          ) {
+            targetNode.children = targetNode.children.filter(
+              (child: TreeNode) => child.id !== sourceNode.id,
+            );
+
+            if (!newData.children) newData.children = [];
+            newData.children.push(sourceNode);
+          }
+        } else {
+          let isDescendant = false;
+
+          const checkDescendant = (node: TreeNode) => {
+            if (node.id === sourceNode.id) isDescendant = true;
+
+            for (const child of node.children ?? []) {
+              checkDescendant(child);
+            }
+          };
+
+          checkDescendant(targetNode);
+
+          if (isDescendant || targetNode.id === newData.id) return prevData;
+
+          if (currentTargetParent?.children) {
+            currentTargetParent.children = currentTargetParent.children.filter(
+              (child: TreeNode) => child.id !== targetNode.id,
+            );
+          }
+
+          if (!sourceNode.children) sourceNode.children = [];
+          sourceNode.children.push(targetNode);
+        }
+
+        nodeStorage.saveTreeData(newData);
+
+        if (selectedNode?.id === targetNode.id) {
+          setSelectedNode(targetNode);
+        } else if (selectedNode?.id === sourceNode.id) {
+          setSelectedNode(sourceNode);
+        }
+
+        return newData;
+      });
+
+      setPrevSelectedNode(null);
+    },
+    [selectedNode],
+  );
+
   const handleDeleteNode = useCallback(
     (nodeId: string, keepChildren: boolean = false) => {
       setData((prevData) => {
@@ -281,7 +372,12 @@ export default function App() {
       <div className="flex-1 relative w-full h-full">
         <TreeGraph
           data={data}
-          onNodeClick={setSelectedNode}
+          onNodeClick={(node) => {
+            if (selectedNode?.id !== node.id) {
+              setPrevSelectedNode(selectedNode);
+            }
+            setSelectedNode(node);
+          }}
           onReorderTasks={handleReorderTasks}
           isKanban={isKanban}
           onToggleKanban={() => setIsKanban(!isKanban)}
@@ -291,13 +387,18 @@ export default function App() {
       </div>
       <DetailPanel
         selectedNode={selectedNode}
+        prevSelectedNode={prevSelectedNode}
+        onToggleLink={handleToggleLink}
         onAddChild={handleAddChild}
         onUpdateNodeLinks={handleUpdateNodeLinks}
         onUpdateDescription={handleUpdateDescription}
         onUpdateNodeName={handleUpdateNodeName}
         onOpenKanban={handleOpenKanban}
         onDeleteNode={handleDeleteNode}
-        onSelectRoot={() => setSelectedNode(data)}
+        onSelectRoot={() => {
+          if (selectedNode?.id !== data.id) setPrevSelectedNode(selectedNode);
+          setSelectedNode(data);
+        }}
       />
     </div>
   );

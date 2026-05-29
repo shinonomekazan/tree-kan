@@ -25,6 +25,12 @@ interface DetailPanelProps {
   onOpenKanban: (id: string) => void;
   onDeleteNode: (nodeId: string, keepChildren: boolean) => void;
   onSelectRoot?: () => void;
+  prevSelectedNode?: TreeNode | null;
+  onToggleLink?: (
+    id1: string,
+    id2: string,
+    action: "create" | "delete",
+  ) => void;
 }
 
 const DetailPanel: FC<DetailPanelProps> = ({
@@ -36,6 +42,8 @@ const DetailPanel: FC<DetailPanelProps> = ({
   onOpenKanban,
   onDeleteNode,
   onSelectRoot,
+  prevSelectedNode,
+  onToggleLink,
 }) => {
   const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -156,23 +164,66 @@ const DetailPanel: FC<DetailPanelProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {prevSelectedNode &&
+            prevSelectedNode.id !== selectedNode.id &&
+            onToggleLink &&
+            (() => {
+              const isPrevParent = prevSelectedNode.children?.some(
+                (c) => c.id === selectedNode.id,
+              );
+              const isCurrParent = selectedNode.children?.some(
+                (c) => c.id === prevSelectedNode.id,
+              );
+              const isLinked = isPrevParent || isCurrParent;
+
+              return (
+                <div className="flex flex-col gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
+                  <div className="text-sm text-blue-900">
+                    {"["}
+                    <span className="font-semibold">
+                      {prevSelectedNode.name}
+                    </span>
+                    {"]"}
+                    <span className="mx-1">{isLinked ? "-" : "→"}</span>
+                    {"["}
+                    <span className="font-semibold">{selectedNode.name}</span>
+                    {"]"}
+                  </div>
+                  <button
+                    onClick={() =>
+                      onToggleLink(
+                        prevSelectedNode.id,
+                        selectedNode.id,
+                        isLinked ? "delete" : "create",
+                      )
+                    }
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold text-white transition-colors w-fit ${isLinked
+                      ? "bg-red-500 hover:bg-red-600"
+                      : "bg-blue-500 hover:bg-blue-600"
+                      }`}
+                  >
+                    {isLinked ? "Xoá link" : "Tạo link"}
+                  </button>
+                </div>
+              );
+            })()}
+
           {selectedNode.type === "task" && selectedNode.status && (
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-slate-600">
                 {t("status")}:
               </span>
               <span
-                className={`px-3 py-1 rounded-full text-xs font-bold text-white ${
-                  selectedNode.status === "done"
-                    ? "bg-blue-500"
-                    : selectedNode.status === "review"
-                      ? "bg-purple-500"
-                      : selectedNode.status === "in-progress"
-                        ? "bg-yellow-500"
-                        : selectedNode.status === "archive"
-                          ? "bg-slate-600"
-                          : "bg-slate-400"
-                }`}
+                className={`px-3 py-1 rounded-full text-xs font-bold text-white ${selectedNode.status === "done"
+                  ? "bg-blue-500"
+                  : selectedNode.status === "review"
+                    ? "bg-purple-500"
+                    : selectedNode.status === "in-progress"
+                      ? "bg-yellow-500"
+                      : selectedNode.status === "archive"
+                        ? "bg-slate-600"
+                        : "bg-slate-400"
+                  }`}
               >
                 {t(
                   selectedNode.status === "in-progress"
