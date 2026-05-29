@@ -37,5 +37,7 @@
   "kanbanBoard": "Kanban Board",
   "deleteNode": "Delete Node",
   "deleteNodeKeepChildren": "Delete node only (Keep children)",
-  "deleteNodeAndChildren": "Delete node and all children"
+  "deleteNodeAndChildren": "Delete node and all children",
+  "deleteLink": "Delete Link",
+  "createLink": "Create Link"
 }

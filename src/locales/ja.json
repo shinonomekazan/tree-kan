@@ -37,5 +37,7 @@
   "kanbanBoard": "カンバンボード",
   "deleteNode": "ノードを削除",
   "deleteNodeKeepChildren": "ノードのみ削除 (子要素を保持)",
-  "deleteNodeAndChildren": "ノードとすべての your 子要素を削除"
+  "deleteNodeAndChildren": "ノードとすべての your 子要素を削除",
+  "deleteLink": "リンクを削除",
+  "createLink": "リンクを作成"
 }

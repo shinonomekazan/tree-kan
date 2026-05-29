@@ -175,9 +175,9 @@ const DetailPanel: FC<DetailPanelProps> = ({
                 (c) => c.id === prevSelectedNode.id,
               );
               const isLinked = isPrevParent || isCurrParent;
-
-              return (
-                <div className="flex flex-col gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
+              let x = false;
+              return (x && (
+                <div className="d-none flex flex-col gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
                   <div className="text-sm text-blue-900">
                     {"["}
                     <span className="font-semibold">
@@ -202,9 +202,9 @@ const DetailPanel: FC<DetailPanelProps> = ({
                       : "bg-blue-500 hover:bg-blue-600"
                       }`}
                   >
-                    {isLinked ? "Xoá link" : "Tạo link"}
+                    {isLinked ? t("deleteLink") : t("createLink")}
                   </button>
-                </div>
+                </div>)
               );
             })()}
 
