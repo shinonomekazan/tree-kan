@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import TreeGraph from "./TreeGraph";
+import TreeGraph from "./tree/TreeGraph";
 import DetailPanel from "./detail-panel/DetailPanel";
 import { projectData } from "./save-data/mockData";
 import { nodeStorage } from "./save-data/storage";

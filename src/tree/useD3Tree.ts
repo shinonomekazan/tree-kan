@@ -1,30 +1,7 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef } from "react";
 import * as d3 from "d3";
-import {
-  ZoomIn,
-  ZoomOut,
-  ChevronDown,
-  ChevronUp,
-  Kanban,
-  Save,
-  Loader2,
-} from "lucide-react";
-import { useTranslation } from "react-i18next";
-import type { TreeNode, TaskStatus } from "./types";
-import { nodeStorage } from "./save-data/storage";
-import KanbanBoard from "./KanbanBoard";
-
-interface TreeGraphProps {
-  data: TreeNode;
-  onNodeClick: (node: TreeNode) => void;
-  onReorderTasks: (
-    updates: { id: string; status: TaskStatus; order: number }[],
-  ) => void;
-  isKanban: boolean;
-  onToggleKanban: () => void;
-  focusedTaskId: string | null;
-  onSave: () => void;
-}
+import type { TreeNode } from "../types";
+import { nodeStorage } from "../save-data/storage";
 
 type CustomNode = d3.HierarchyPointNode<TreeNode> & {
   branchColor?: string;
@@ -33,95 +10,13 @@ type CustomNode = d3.HierarchyPointNode<TreeNode> & {
   angle: number;
 };
 
-export default function TreeGraph({
-  data,
-  onNodeClick,
-  onReorderTasks,
-  isKanban,
-  onToggleKanban,
-  focusedTaskId,
-  onSave,
-}: TreeGraphProps) {
-  const { t, i18n } = useTranslation();
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+export function useD3Tree(
+  wrapperRef: React.RefObject<HTMLDivElement | null>,
+  svgRef: React.RefObject<SVGSVGElement | null>,
+  data: TreeNode,
+  onNodeClick: (node: TreeNode) => void,
+) {
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isLegendOpen, setIsLegendOpen] = useState(false);
-  const [showImportBtn, setShowImportBtn] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).has("import")) {
-      setShowImportBtn(true);
-    }
-  }, []);
-
-  const handleSaveClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    setIsSaving(true);
-    nodeStorage.saveTreeData(data);
-    nodeStorage.commit();
-    onSave();
-    setTimeout(() => {
-      setIsSaving(false);
-    }, 400);
-  };
-
-  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const content = event.target?.result as string;
-        nodeStorage.importAllData(JSON.parse(content));
-        window.location.href = window.location.pathname;
-      } catch { }
-    };
-    reader.readAsText(file);
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const stats = useMemo(() => {
-    let total = 0,
-      done = 0,
-      review = 0,
-      inProgress = 0,
-      todo = 0;
-    const traverse = (node: TreeNode) => {
-      if (node.type === "task" && node.status !== "archive") {
-        total++;
-        if (node.status === "done") done++;
-        else if (node.status === "review") review++;
-        else if (node.status === "in-progress") inProgress++;
-        else todo++;
-      }
-      if (node.children) node.children.forEach(traverse);
-    };
-    traverse(data);
-    const getPercent = (count: number) =>
-      total > 0 ? Math.round((count / total) * 100) : 0;
-    return {
-      done: getPercent(done),
-      review: getPercent(review),
-      inProgress: getPercent(inProgress),
-      todo: getPercent(todo),
-    };
-  }, [data]);
-
-  const pieStyle = useMemo(() => {
-    const p1 = stats.done,
-      p2 = p1 + stats.review,
-      p3 = p2 + stats.inProgress;
-    return {
-      background: `conic-gradient(#3b82f6 0% ${p1}%, #a855f7 ${p1}% ${p2}%, #eab308 ${p2}% ${p3}%, #94a3b8 ${p3}% 100%)`,
-    };
-  }, [stats]);
 
   useEffect(() => {
     if (!wrapperRef.current || !svgRef.current) return;
@@ -429,7 +324,7 @@ export default function TreeGraph({
         d3.select(svgRef.current).on(".zoom", null);
       }
     };
-  }, [data, onNodeClick]);
+  }, [data, onNodeClick, wrapperRef, svgRef]);
 
   const handleZoom = (factor: number) => {
     if (!svgRef.current || !zoomRef.current) return;
@@ -439,168 +334,5 @@ export default function TreeGraph({
       .call(zoomRef.current.scaleBy, factor);
   };
 
-  return (
-    <div
-      ref={wrapperRef}
-      className="absolute inset-0 w-full h-full bg-slate-50 z-0"
-    >
-      <svg
-        ref={svgRef}
-        className={`block w-full h-full outline-none transition-opacity ${isKanban ? "opacity-0 pointer-events-none" : "opacity-100"}`}
-        onContextMenu={(e) => e.preventDefault()}
-      />
-
-      <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
-        <div className="flex gap-2">
-          {showImportBtn && (
-            <>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-              >
-                Import
-              </button>
-              <input
-                type="file"
-                accept=".json,application/json"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handleImportFile}
-              />
-            </>
-          )}
-          <button
-            onClick={() => i18n.changeLanguage("en")}
-            className={`px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border ${i18n.language === "en" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
-          >
-            EN
-          </button>
-          <button
-            onClick={() => i18n.changeLanguage("ja")}
-            className={`px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors border ${i18n.language === "ja" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"}`}
-          >
-            JA
-          </button>
-        </div>
-        <button
-          onClick={handleSaveClick}
-          disabled={isSaving}
-          className="flex items-center justify-center gap-1.5 w-full px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-all border bg-blue-600 text-white border-blue-600 hover:bg-blue-700 disabled:opacity-75 disabled:cursor-not-allowed"
-        >
-          {isSaving ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : (
-            <Save size={14} />
-          )}
-          {isSaving ? "Saving..." : "Save"}
-        </button>
-      </div>
-
-      {isKanban && (
-        <div className="absolute inset-0 z-0 bg-transparent">
-          <KanbanBoard
-            data={data}
-            onNodeClick={onNodeClick}
-            onReorderTasks={onReorderTasks}
-            focusedTaskId={focusedTaskId}
-          />
-        </div>
-      )}
-
-      {!isKanban && (
-        <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-10">
-          <button
-            onClick={() => handleZoom(1.2)}
-            className="p-2 bg-white rounded-lg shadow-md border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
-          >
-            <ZoomIn size={18} />
-          </button>
-          <button
-            onClick={() => handleZoom(0.8)}
-            className="p-2 bg-white rounded-lg shadow-md border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
-          >
-            <ZoomOut size={18} />
-          </button>
-        </div>
-      )}
-
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-        <div className="bg-white/95 rounded-lg shadow-md border border-slate-200 w-56 overflow-hidden transition-all">
-          <div
-            className="p-2.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors"
-            onClick={() => setIsLegendOpen(!isLegendOpen)}
-          >
-            <h1 className="font-bold text-xs text-slate-800 flex items-center gap-2">
-              {t("statistics")}
-            </h1>
-            {isLegendOpen ? (
-              <ChevronUp size={14} className="text-slate-500" />
-            ) : (
-              <ChevronDown size={14} className="text-slate-500" />
-            )}
-          </div>
-
-          <div
-            className={`transition-all duration-300 ease-in-out ${isLegendOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0"}`}
-          >
-            <div className="p-3 flex items-center gap-4">
-              <div
-                className="w-14 h-14 rounded-full shadow-sm border border-slate-200 shrink-0"
-                style={pieStyle}
-              />
-              <ul className="flex-1 space-y-2 text-[10px] font-medium text-slate-700">
-                <li className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-blue-500 shadow-sm border border-white" />
-                    {t("done")}
-                  </span>
-                  <span className="font-bold text-slate-900">
-                    {stats.done}%
-                  </span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-purple-500 shadow-sm border border-white" />
-                    {t("review")}
-                  </span>
-                  <span className="font-bold text-slate-900">
-                    {stats.review}%
-                  </span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-yellow-500 shadow-sm border border-white" />
-                    {t("inProgress")}
-                  </span>
-                  <span className="font-bold text-slate-900">
-                    {stats.inProgress}%
-                  </span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-slate-400 shadow-sm border border-white" />
-                    {t("todo")}
-                  </span>
-                  <span className="font-bold text-slate-900">
-                    {stats.todo}%
-                  </span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={onToggleKanban}
-          className={`flex items-center justify-center gap-2 w-56 p-2 rounded-lg shadow-md border transition-colors font-bold text-xs ${isKanban
-              ? "bg-red-500 hover:bg-red-600 text-white border-red-600"
-              : "bg-white/95 hover:bg-slate-50 text-slate-800 border-slate-200"
-            }`}
-        >
-          <Kanban size={14} />
-          {isKanban ? t("showGraph") : t("kanbanBoard")}
-        </button>
-      </div>
-    </div>
-  );
+  return { handleZoom };
 }
