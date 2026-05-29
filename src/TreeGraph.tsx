@@ -592,7 +592,10 @@ export default function TreeGraph({
 
         <button
           onClick={onToggleKanban}
-          className="flex items-center justify-center gap-2 w-56 p-2 bg-white/95 rounded-lg shadow-md border border-slate-200 hover:bg-slate-50 text-slate-800 font-bold text-xs transition-colors"
+          className={`flex items-center justify-center gap-2 w-56 p-2 rounded-lg shadow-md border transition-colors font-bold text-xs ${isKanban
+              ? "bg-red-500 hover:bg-red-600 text-white border-red-600"
+              : "bg-white/95 hover:bg-slate-50 text-slate-800 border-slate-200"
+            }`}
         >
           <Kanban size={14} />
           {isKanban ? t("showGraph") : t("kanbanBoard")}

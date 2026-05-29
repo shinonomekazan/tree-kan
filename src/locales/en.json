@@ -33,6 +33,6 @@
   "renameNode": "Rename Node",
   "newNamePh": "Enter new name...",
   "statistics": "Statistics",
-  "showGraph": "Show Graph",
+  "showGraph": "Close Kanban Board",
   "kanbanBoard": "Kanban Board"
 }
