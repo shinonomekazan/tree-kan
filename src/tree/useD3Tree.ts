@@ -196,7 +196,7 @@ export function useD3Tree(
                 : radialLinkGen(l);
             });
         })
-        .on("end", function (event, d) {
+        .on("end", function (d) {
           const descendants = d.descendants() as CustomNode[];
           const descendantIds = new Set(descendants.map((n) => n.data.id));
 

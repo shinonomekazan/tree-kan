@@ -41,7 +41,6 @@ const DetailPanel: FC<DetailPanelProps> = ({
   onUpdateNodeName,
   onOpenKanban,
   onDeleteNode,
-  onSelectRoot,
   prevSelectedNode,
   onToggleLink,
 }) => {
