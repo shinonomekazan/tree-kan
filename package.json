@@ -3,12 +3,15 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://shinonomekazan.github.io/tree-kan",
   "scripts": {
     "format": "prettier --write .",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy-gitpage": "gh-pages -d dist"
   },
   "dependencies": {
     "d3": "^7.9.0",
@@ -32,6 +35,7 @@
     "eslint": "^10.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
+    "gh-pages": "^6.3.0",
     "globals": "^17.5.0",
     "prettier": "^3.8.3",
     "typescript": "~6.0.2",
