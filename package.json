@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy-gitpage": "gh-pages -d dist"
+    "deploy-gitpage": "gh-pages -d dist -r https://github.com/shinonomekazan/tree-kan.git"
   },
   "dependencies": {
     "d3": "^7.9.0",
